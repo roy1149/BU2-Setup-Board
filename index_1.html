@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BU2 셋업 보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fixed left rail (tabs) + work surface; timelines scroll inside their own frame */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#eaeef3; --line:#d6dce5; --line-soft:#e6eaf0;
+  --fg:#18202b; --muted:#5d6878; --faint:#8a94a3;
+  --accent:#2350b8; --accent-soft:#e3eafb; --accent-fg:#ffffff;
+  --ok:#1f8a55; --ok-soft:#dff3e8; --warn:#b86e00; --warn-soft:#fbefd9; --bad:#c23434; --bad-soft:#f9e1e1;
+  --c1:#2350b8; --c2:#1f8a55; --c3:#b86e00; --c4:#7b45b8; --c5:#7a8597; --c6:#0e8a91;
+  --font:"IBM Plex Sans KR",-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --surface:#18202a; --sunk:#1e2833; --line:#2c3846; --line-soft:#232e3a;
+  --fg:#e6ebf2; --muted:#9aa6b6; --faint:#6f7b8b;
+  --accent:#6f97f2; --accent-soft:#1e2c4a; --accent-fg:#0d1420;
+  --ok:#4cc48a; --ok-soft:#173326; --warn:#e3a33f; --warn-soft:#3a2c14; --bad:#f07070; --bad-soft:#3d1c1e;
+  --c1:#6f97f2; --c2:#4cc48a; --c3:#e3a33f; --c4:#b48cf0; --c5:#8a96a8; --c6:#45c2c8;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --surface:#18202a; --sunk:#1e2833; --line:#2c3846; --line-soft:#232e3a;
+  --fg:#e6ebf2; --muted:#9aa6b6; --faint:#6f7b8b;
+  --accent:#6f97f2; --accent-soft:#1e2c4a; --accent-fg:#0d1420;
+  --ok:#4cc48a; --ok-soft:#173326; --warn:#e3a33f; --warn-soft:#3a2c14; --bad:#f07070; --bad-soft:#3d1c1e;
+  --c1:#6f97f2; --c2:#4cc48a; --c3:#e3a33f; --c4:#b48cf0; --c5:#8a96a8; --c6:#45c2c8;
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:208px 1fr;min-height:100%}
+.rail{background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{padding:4px 10px 16px;display:flex;flex-direction:column;gap:2px}
+.brand b{font-size:16px;letter-spacing:-.01em}
+.brand span{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.tab{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--muted);font-weight:500}
+.tab:hover{background:var(--sunk);color:var(--fg)}
+.tab.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tab .n{margin-left:auto;font-family:var(--mono);font-size:11px;background:var(--bad-soft);color:var(--bad);padding:0 6px;border-radius:9px}
+.tab svg{width:16px;height:16px;flex:none}
+.rail .foot{margin-top:auto;font-size:11px;color:var(--faint);padding:0 10px}
+main{min-width:0;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.head h1{font-size:20px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.head .sub{color:var(--muted);font-size:13px}
+.head .sp{flex:1}
+.btn{border:1px solid var(--line);background:var(--surface);padding:6px 12px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--faint)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.danger{color:var(--bad)}
+.btn.arm{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:5px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-width:0}
+.panel>h2{font-size:13px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:8px;font-weight:600}
+.panel>h2 .sp{flex:1}
+.panel .body{padding:12px 14px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--mono);font-size:26px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2;margin-top:4px}
+.kpi .h{font-size:12px;color:var(--faint)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-soft);min-width:0}
+.li:last-child{border-bottom:0}
+.li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .m{font-size:12px;color:var(--muted);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:1px 8px;border-radius:10px;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty b{color:var(--fg)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.bar{height:6px;background:var(--sunk);border-radius:3px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.bar i.done{background:var(--ok)}
+/* timeline */
+.tl{overflow:auto;max-height:70vh;border-top:1px solid var(--line-soft)}
+.tl-in{position:relative}
+.tl-row{display:flex;border-bottom:1px solid var(--line-soft);min-height:34px}
+.tl-lab{position:sticky;left:0;z-index:2;background:var(--surface);width:220px;flex:none;padding:6px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;min-width:0}
+.tl-lab .a{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-lab .b{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-lab.grp{background:var(--sunk);font-weight:700;font-size:12px;letter-spacing:.03em}
+.tl-row.grp{background:var(--sunk);min-height:28px}
+.tl-row.sub .tl-lab{padding-left:26px}
+.tl-row.sub .tl-lab .a{font-weight:500;font-size:12px}
+.tl-trk{position:relative;flex:none}
+.tl-head{position:sticky;top:0;z-index:3;background:var(--surface)}
+.tl-head .tl-lab{z-index:4;font-size:11px;color:var(--muted)}
+.hm{display:flex;border-bottom:1px solid var(--line-soft)}
+.hm div{font-size:11px;font-weight:600;padding:3px 6px;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden}
+.hd{display:flex}
+.hd div{font-size:10px;text-align:center;color:var(--faint);font-family:var(--mono);border-left:1px solid var(--line-soft);padding:2px 0}
+.hd div.we{background:var(--sunk)}
+.hd div.td{color:var(--accent);font-weight:700}
+.gl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-soft)}
+.we-bg{position:absolute;top:0;bottom:0;background:var(--sunk);opacity:.55}
+.today{position:absolute;top:0;bottom:0;border-left:2px solid var(--bad);z-index:1;pointer-events:none}
+.bk{position:absolute;height:20px;border-radius:4px;font-size:11px;line-height:20px;padding:0 6px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:var(--c1);border:0;text-align:left;z-index:1}
+.bk:hover{filter:brightness(1.08)}
+.bk.ghost{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.bk .pf{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.9}
+.bk span{position:relative}
+.bk.late{background:var(--bad)}
+.bk.done{background:var(--ok)}
+.bk.todo{background:var(--c5)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.tlbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px}
+.tlbar .rng{font-family:var(--mono);font-size:12px;color:var(--muted)}
+/* tables */
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-size:11px;font-weight:600;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;letter-spacing:.02em;background:var(--surface);position:sticky;top:0}
+td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--sunk)}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+input[type=text],input[type=date],input[type=search],select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;font-size:13px;min-width:0}
+textarea{width:100%;min-height:70px;resize:vertical}
+/* equipment cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-width:0}
+.card .ch{padding:12px 14px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid var(--line-soft)}
+.card .ch .ti{flex:1;min-width:0}
+.card .ch .ti b{display:block;font-size:14px}
+.card .ch .ti span{font-size:12px;color:var(--muted)}
+.card .pc{font-family:var(--mono);font-size:22px;font-weight:500}
+.card .pb{padding:10px 14px 4px}
+.chk{display:flex;flex-direction:column;padding:4px 8px 10px}
+.chk label{display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}
+.chk label:hover{background:var(--sunk)}
+.chk label.d .nm{color:var(--faint);text-decoration:line-through}
+.chk .nm{flex:1;min-width:0}
+.chk .dt{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.chk .dt.late{color:var(--bad);font-weight:600}
+.sitehd{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin:6px 0 -4px;display:flex;gap:8px;align-items:center}
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(10,15,25,.45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:50;overflow:auto}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:min(620px,100%);box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.modal h3{margin:0;padding:14px 18px;border-bottom:1px solid var(--line-soft);font-size:15px}
+.modal form{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12px;color:var(--muted);font-weight:500}
+.fld label em{color:var(--bad);font-style:normal}
+.fld input,.fld select{width:100%}
+.mact{grid-column:1/-1;display:flex;gap:8px;padding-top:4px}
+.mact .sp{flex:1}
+.items{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.irow{display:grid;grid-template-columns:22px minmax(0,1fr) 128px 128px 28px;gap:6px;align-items:center}
+.irow input[type=text]{width:100%}
+.irow .x{border:0;background:none;cursor:pointer;color:var(--faint);font-size:16px}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:13px}
+.modal.wiz{width:min(720px,100%)}
+.wsteps{display:flex;gap:4px;padding:12px 18px 0;overflow-x:auto}
+.ws{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;cursor:pointer;color:var(--faint);font-size:11px;padding:4px 2px}
+.ws i{font-style:normal;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--sunk);font-weight:600;font-family:var(--mono)}
+.ws span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ws.on{color:var(--accent);font-weight:600}.ws.on i{background:var(--accent);color:var(--accent-fg)}
+.ws.done i{background:var(--ok-soft);color:var(--ok)}
+.wbody{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;min-height:200px}
+.wbody h4{margin:0;font-size:15px}
+.wbody ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;line-height:1.6}
+.wbody code{font-family:var(--mono);background:var(--sunk);padding:1px 5px;border-radius:4px;font-size:12px}
+.wbody a.btn{align-self:flex-start;text-decoration:none}
+@media (max-width:860px){.ws span{display:none}}
+.mobnav{display:none}
+/* jira block */
+.jr{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:4px 12px;padding:9px 0;border-bottom:1px solid var(--line-soft);align-items:baseline}
+.jr:last-child{border-bottom:0}
+.jr .k{font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;font-weight:500}
+.jr .k:hover{text-decoration:underline}
+.jr .s{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jr .w{grid-column:2/4;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:2px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.jmsg{padding:18px 14px;color:var(--muted);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.jmsg b{color:var(--fg)}
+.jstamp{font-size:11px;color:var(--faint);font-weight:400;font-family:var(--mono)}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .rail{display:none}
+  .mobnav{display:flex;gap:4px;overflow-x:auto;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .mobnav .tab{padding:6px 10px;white-space:nowrap;font-size:13px}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--surface)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid2{grid-template-columns:1fr}
+  .tl-lab{width:140px}
+  .modal form{grid-template-columns:1fr}
+  .irow{grid-template-columns:22px minmax(0,1fr) 28px}
+  .irow input[type=date]{grid-column:2/3}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" id="rail" aria-label="탭"></nav>
+  <div style="min-width:0">
+    <nav class="mobnav" id="mobnav" aria-label="탭"></nav>
+    <main><div class="wrap" id="view"></div></main>
+  </div>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+(function(){
+"use strict";
+// ---------- constants ----------
+const TABS=[
+  {k:'home',l:'홈',i:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'},
+  {k:'gantt',l:'셋업 간트',i:'<path d="M4 5h9M7 10h11M5 15h7M10 20h9"/>'},
+  {k:'people',l:'인원 스케쥴',i:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'},
+  {k:'progress',l:'설비 진행율',i:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'},
+  {k:'trouble',l:'트러블 리스트',i:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>'},
+  {k:'admin',l:'기준정보',i:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>'}
+];
+const SCH_TYPES=[
+  {k:'셋업',c:'var(--c1)'},{k:'현장지원',c:'var(--c6)'},{k:'A/S',c:'var(--c3)'},
+  {k:'교육',c:'var(--c4)'},{k:'사무',c:'var(--c5)'},{k:'휴가',c:'var(--c2)'}
+];
+const FIELD_TYPES=['셋업','현장지원','A/S']; // counted as 출장일
+const EQ_STATUS=['대기','진행','완료','보류'];
+const TR_STATUS=['접수','진행','모니터링','완료'];
+const TR_CAT=['HW','SW','Vision','Motion','Handler','고객요청','기타'];
+const TR_PRI=['상','중','하'];
+const DEFAULT_ITEMS=['설비 반입','설치·레벨링','전원·유틸리티 연결','SW 설치·통신 확인','Calibration','Teaching·레시피','Gage R&R','양산 검증','고객 Buy-off'];
+
+// ---------- state ----------
+const S={sites:[],members:[],equips:[],schedules:[],troubles:[]};
+let loaded={};let db=null;let dl=null;let canWrite=true;let dbState='wait';
+let tab=readTab();
+const ui={gZoom:'week',gStart:null,pZoom:'week',pStart:null,open:{},trF:{site:'',status:'open',q:'',cat:''},pSite:'',prSite:''};
+function readTab(){const h=(location.hash||'').slice(1);if(TABS.some(t=>t.k===h))return h;try{const v=localStorage.getItem('bu2tab');if(TABS.some(t=>t.k===v))return v}catch(e){}return 'home'}
+
+// ---------- utils ----------
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pd=s=>{if(!s)return null;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?new Date(+m[1],+m[2]-1,+m[3]):null};
+const fd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const today=()=>{const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
+const addD=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const diff=(a,b)=>Math.round((b-a)/864e5);
+const short=s=>{const d=pd(s);return d?(d.getMonth()+1)+'/'+d.getDate():'–'};
+const DOW='일월화수목금토';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const siteName=id=>{const s=S.sites.find(x=>x.id===id);return s?s.name:'(삭제된 사이트)'};
+const memberName=id=>{const m=S.members.find(x=>x.id===id);return m?m.name:'(미지정)'};
+const equipName=id=>{const e=S.equips.find(x=>x.id===id);return e?e.model+(e.unit?' #'+e.unit:''):''};
+const byName=(a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko');
+function eqProg(e){const it=e.items||[];if(!it.length)return e.status==='완료'?100:0;return Math.round(it.filter(i=>i.done).length/it.length*100)}
+function eqRange(e){let s=null,f=null;for(const i of (e.items||[])){const a=pd(i.start),b=pd(i.end)||a;if(a&&(!s||a<s))s=a;if(b&&(!f||b>f))f=b}if(!s){s=pd(e.start);f=pd(e.end)||s}return s?{s,f}:null}
+function itemLate(i){const e=pd(i.end);return !i.done&&e&&e<today()}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+
+// ---------- server (Google Apps Script) ----------
+// 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
+const DEFAULT_API_URL='';
+const COLS=['sites','members','equips','schedules','troubles'];
+let API_URL='',API_KEY='',pollT=null,lastSig='';
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+async function api(action,body){
+  const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,key:API_KEY},body||{}))});
+  if(!r.ok)throw {code:'http',message:'HTTP '+r.status};
+  const j=await r.json();
+  if(!j.ok)throw {code:j.code||'server',message:j.error||'서버 오류'};
+  return j;
+}
+function applyAll(data){
+  const sig=JSON.stringify(data);if(sig===lastSig)return false;lastSig=sig;
+  for(const c of COLS)S[c]=(data[c]||[]);
+  const cfg=(data.config||[]).find(x=>x.id==='jira');JC=Object.assign({},cfg||{});JC._loaded=true;
+  return true;
+}
+async function load(){
+  try{const j=await api('load');dbState='on';if(applyAll(j.data)){render();jiraEnsure()}else if(J.state==='init')jiraEnsure()}
+  catch(e){
+    if(e.code==='auth'){dbState='auth';render();return}
+    if(dbState!=='on'){dbState='off';render()}else toast('서버와 동기화하지 못했습니다. 잠시 후 다시 시도합니다');
+  }
+}
+async function initDb(){
+  API_URL=lsGet('bu2api')||DEFAULT_API_URL;API_KEY=lsGet('bu2key');
+  if(!API_URL){dbState='nourl';render();return}
+  dbState='wait';render();
+  await load();
+  clearInterval(pollT);pollT=setInterval(()=>{if(!document.hidden&&!modalCtx)load()},30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+}
+async function save(col,id,data){
+  if(dbState!=='on'){toast('서버에 연결되지 않아 저장할 수 없습니다');return false}
+  try{const j=await api('save',{col,id:id||'',data});
+    const list=S[col]||(S[col]=[]);const i=list.findIndex(x=>x.id===j.id);const row=Object.assign({id:j.id},data);if(i>=0)list[i]=row;else list.push(row);
+    lastSig='';render();if(col==='members')jiraEnsure();return true}
+  catch(e){toast(e.code==='auth'?'팀 접속 키가 맞지 않아 저장하지 못했습니다':'저장하지 못했습니다: '+(e.message||'네트워크 오류'));return false}
+}
+async function del(col,id){
+  try{await api('delete',{col,id});S[col]=S[col].filter(x=>x.id!==id);lastSig='';render();toast('삭제했습니다')}catch(e){toast('삭제하지 못했습니다')}
+}
+async function saveConfig(o){
+  try{await api('save',{col:'config',id:'jira',data:o});JC=Object.assign({},o,{_loaded:true});lastSig='';render();jiraEnsure(true);return true}catch(e){toast('저장하지 못했습니다');return false}
+}
+function strip(o){const r={};for(const k in o)if(k!=='id')r[k]=o[k];return r}
+const GAS_CODE="/**\n * BU2 셋업 보드 — Google Apps Script 백엔드\n * - 데이터: 이 스프레드시트의 시트(sites, members, equips, schedules, troubles, config)에 저장\n * - Jira: 스크립트 속성의 Jira API 토큰으로 Jira Cloud REST API를 대신 호출\n *\n * 스크립트 속성 (프로젝트 설정 → 스크립트 속성)\n *   TEAM_KEY    (선택) 팀 접속 키. 넣으면 키를 아는 사람만 읽고 쓸 수 있음\n *   JIRA_SITE   예: https://do-intekplus.atlassian.net\n *   JIRA_EMAIL  Jira 계정 이메일 (API 토큰 발급자)\n *   JIRA_TOKEN  https://id.atlassian.com/manage-profile/security/api-tokens 에서 발급\n */\nvar COLS = ['sites', 'members', 'equips', 'schedules', 'troubles', 'config'];\n\nfunction doGet() {\n  return out_({ ok: true, msg: 'BU2 셋업 보드 서버가 동작 중입니다.' });\n}\n\nfunction doPost(e) {\n  try {\n    var req = JSON.parse(e.postData.contents || '{}');\n    var props = PropertiesService.getScriptProperties();\n    var teamKey = props.getProperty('TEAM_KEY');\n    if (teamKey && req.key !== teamKey) return out_({ ok: false, code: 'auth', error: '팀 접속 키가 맞지 않습니다.' });\n\n    switch (req.action) {\n      case 'load': return out_({ ok: true, data: loadAll_() });\n      case 'save': return out_({ ok: true, id: save_(req.col, req.id, req.data) });\n      case 'delete': remove_(req.col, req.id); return out_({ ok: true });\n      case 'jiraSearch': return out_(jiraSearch_(req.jql, req.max));\n      case 'jiraUser': return out_(jiraUser_(req.query));\n      default: return out_({ ok: false, code: 'bad_request', error: '알 수 없는 요청: ' + req.action });\n    }\n  } catch (err) {\n    return out_({ ok: false, code: 'server', error: String(err && err.message || err) });\n  }\n}\n\nfunction out_(obj) {\n  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);\n}\n\n// ---------- 데이터 ----------\nfunction sheet_(col) {\n  if (COLS.indexOf(col) < 0) throw new Error('허용되지 않은 컬렉션: ' + col);\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(col);\n  if (!sh) {\n    sh = ss.insertSheet(col);\n    sh.getRange(1, 1, 1, 3).setValues([['id', 'json', 'updated']]);\n    sh.setFrozenRows(1);\n  }\n  return sh;\n}\n\nfunction rows_(col) {\n  var sh = sheet_(col);\n  var n = sh.getLastRow() - 1;\n  if (n < 1) return [];\n  return sh.getRange(2, 1, n, 2).getValues();\n}\n\nfunction loadAll_() {\n  var data = {};\n  COLS.forEach(function (c) {\n    data[c] = rows_(c).filter(function (r) { return r[0]; }).map(function (r) {\n      var o = {};\n      try { o = JSON.parse(r[1]); } catch (e) {}\n      o.id = String(r[0]);\n      return o;\n    });\n  });\n  return data;\n}\n\nfunction save_(col, id, data) {\n  var lock = LockService.getScriptLock();\n  lock.waitLock(20000);\n  try {\n    var sh = sheet_(col);\n    if (!id) id = Utilities.getUuid().replace(/-/g, '').slice(0, 20);\n    if (data && data.id) delete data.id;\n    var json = JSON.stringify(data || {});\n    var now = new Date();\n    var rows = rows_(col);\n    for (var i = 0; i < rows.length; i++) {\n      if (String(rows[i][0]) === String(id)) {\n        sh.getRange(i + 2, 2, 1, 2).setValues([[json, now]]);\n        return id;\n      }\n    }\n    sh.appendRow([id, json, now]);\n    return id;\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction remove_(col, id) {\n  var lock = LockService.getScriptLock();\n  lock.waitLock(20000);\n  try {\n    var sh = sheet_(col);\n    var rows = rows_(col);\n    for (var i = rows.length - 1; i >= 0; i--) {\n      if (String(rows[i][0]) === String(id)) sh.deleteRow(i + 2);\n    }\n  } finally {\n    lock.releaseLock();\n  }\n}\n\n// ---------- Jira ----------\nfunction jiraConf_() {\n  var p = PropertiesService.getScriptProperties();\n  var site = (p.getProperty('JIRA_SITE') || '').replace(/\\/+$/, '');\n  var email = p.getProperty('JIRA_EMAIL');\n  var token = p.getProperty('JIRA_TOKEN');\n  if (!site || !email || !token) return null;\n  if (!/^https?:\\/\\//.test(site)) site = 'https://' + site;\n  return { site: site, auth: 'Basic ' + Utilities.base64Encode(email + ':' + token) };\n}\n\nfunction jiraFetch_(conf, path, opt) {\n  opt = opt || {};\n  var res = UrlFetchApp.fetch(conf.site + path, {\n    method: opt.method || 'get',\n    contentType: 'application/json',\n    payload: opt.body ? JSON.stringify(opt.body) : undefined,\n    headers: { Authorization: conf.auth, Accept: 'application/json' },\n    muteHttpExceptions: true\n  });\n  var code = res.getResponseCode();\n  var text = res.getContentText();\n  if (code >= 300) {\n    var msg = text;\n    try { var j = JSON.parse(text); msg = (j.errorMessages || []).concat(Object.values(j.errors || {})).join(' / ') || text; } catch (e) {}\n    return { ok: false, code: 'jira_http', error: 'HTTP ' + code + ' ' + String(msg).slice(0, 300) };\n  }\n  return { ok: true, body: JSON.parse(text) };\n}\n\nfunction jiraSearch_(jql, max) {\n  var conf = jiraConf_();\n  if (!conf) return { ok: false, code: 'jira_config', error: 'Jira 연결 정보가 없습니다.' };\n  if (!jql) return { ok: false, code: 'bad_request', error: 'JQL이 비어 있습니다.' };\n  var r = jiraFetch_(conf, '/rest/api/3/search/jql', {\n    method: 'post',\n    body: {\n      jql: jql,\n      maxResults: Math.min(Number(max) || 50, 100),\n      fields: ['summary', 'status', 'assignee', 'reporter', 'creator', 'updated', 'created', 'issuetype', 'priority', 'project']\n    }\n  });\n  if (!r.ok) return r;\n  // 응답 크기를 줄여 필요한 필드만 돌려줌\n  var issues = (r.body.issues || []).map(function (x) {\n    var f = x.fields || {};\n    var u = function (p) { return p ? { displayName: p.displayName, accountId: p.accountId } : null; };\n    return {\n      key: x.key,\n      fields: {\n        summary: f.summary,\n        status: f.status ? { name: f.status.name, statusCategory: { key: f.status.statusCategory && f.status.statusCategory.key } } : null,\n        issuetype: f.issuetype ? { name: f.issuetype.name } : null,\n        priority: f.priority ? { name: f.priority.name } : null,\n        project: f.project ? { key: f.project.key } : null,\n        assignee: u(f.assignee), reporter: u(f.reporter), creator: u(f.creator),\n        updated: f.updated, created: f.created\n      }\n    };\n  });\n  return { ok: true, site: conf.site, issues: issues };\n}\n\nfunction jiraUser_(query) {\n  var conf = jiraConf_();\n  if (!conf) return { ok: false, code: 'jira_config', error: 'Jira 연결 정보가 없습니다.' };\n  var r = jiraFetch_(conf, '/rest/api/3/user/search?maxResults=10&query=' + encodeURIComponent(query || ''));\n  if (!r.ok) return r;\n  var users = (r.body || []).filter(function (u) { return u.accountType === 'atlassian'; }).map(function (u) {\n    return { accountId: u.accountId, displayName: u.displayName, emailAddress: u.emailAddress || '' };\n  });\n  return { ok: true, users: users };\n}\n\n/** Apps Script 편집기에서 한 번 실행해 Jira 연결을 확인할 때 사용 */\nfunction testJira() {\n  Logger.log(JSON.stringify(jiraSearch_('updated >= -1d ORDER BY updated DESC', 5)).slice(0, 1500));\n}\n";
+const WIZ=[
+  {t:'구글 시트 만들기',b:`<ol><li>아래 버튼으로 새 구글 시트를 엽니다. (구글 로그인 필요)</li><li>왼쪽 위 <b>제목 없는 스프레드시트</b>를 눌러 <b>BU2 셋업 보드 DATA</b>로 이름을 바꿉니다.</li></ol><a class="btn pri" href="https://sheets.new" target="_blank" rel="noopener">새 구글 시트 열기 ↗</a>`},
+  {t:'Apps Script 열기',b:`<ol><li>방금 연 시트의 위쪽 메뉴에서 <b>확장 프로그램</b> → <b>Apps Script</b>를 누릅니다.</li><li>새 탭에 코드 편집기가 열리고 <code>function myFunction() { }</code>이 보이면 다음 단계로 갑니다.</li></ol>`},
+  {t:'서버 코드 붙여넣기',b:`<ol><li>아래 <b>코드 복사</b>를 누릅니다.</li><li>Apps Script 편집기를 클릭하고 <b>Ctrl+A</b>로 기존 코드를 모두 선택한 뒤 <b>Ctrl+V</b>로 붙여넣습니다.</li><li><b>Ctrl+S</b>로 저장합니다. (위쪽 디스크 아이콘)</li></ol><div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn pri" data-act="wCopy">코드 복사</button><span id="wCopied" class="muted" style="font-size:12px"></span></div><textarea id="wCode" readonly style="font-family:var(--mono);font-size:11px;min-height:110px;margin-top:8px"></textarea>`},
+  {t:'웹 앱으로 배포',b:`<ol><li>편집기 오른쪽 위 파란 <b>배포</b> → <b>새 배포</b>를 누릅니다.</li><li>'유형 선택' 옆 <b>톱니바퀴</b> → <b>웹 앱</b>을 고릅니다.</li><li><b>다음 사용자 인증 정보로 실행</b>: 나<br><b>액세스 권한이 있는 사용자</b>: 모든 사용자</li><li><b>배포</b>를 누릅니다.</li></ol>`},
+  {t:'권한 승인',b:`<ol><li><b>액세스 승인</b> → 본인 구글 계정을 고릅니다.</li><li>"Google에서 확인하지 않은 앱" 화면이 나오면 왼쪽 아래 <b>고급</b> → <b>(안전하지 않음)으로 이동</b>을 누릅니다.<br><span class="muted">본인이 만든 스크립트라 나오는 정상 경고입니다.</span></li><li><b>허용</b>을 누릅니다.</li></ol>`},
+  {t:'웹 앱 URL 붙여넣고 연결',b:`<ol><li>배포 완료 창의 <b>웹 앱 URL</b> 아래 <b>복사</b>를 누릅니다.</li><li>아래 칸에 붙여넣고 <b>연결 테스트</b>를 누릅니다.</li></ol>
+  <div class="fld"><label for="s_url">Apps Script 웹 앱 URL</label><input id="s_url" type="text" placeholder="https://script.google.com/macros/s/…/exec" value="${'${esc(API_URL)}'}"></div>
+  <div class="fld" style="margin-top:8px"><label for="s_key">팀 접속 키 (선택 · Apps Script 스크립트 속성에 TEAM_KEY를 넣은 경우만)</label><input id="s_key" type="text" value="${'${esc(API_KEY)}'}"></div>
+  <div id="wRes" style="margin-top:8px;font-size:13px"></div>`}
+];
+let wStep=0;
+function openServer(start){
+  modalCtx={col:'__server',data:{},fields:[]};
+  if(typeof start==='number')wStep=start;else wStep=API_URL?WIZ.length-1:0;
+  drawWiz();
+}
+function drawWiz(){
+  const s=WIZ[wStep],last=wStep===WIZ.length-1;
+  const body=s.b.replace('${esc(API_URL)}',esc(lsGet('bu2api')||API_URL)).replace('${esc(API_KEY)}',esc(API_KEY));
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal wiz" role="dialog" aria-modal="true" aria-label="서버 연결"><h3>서버 연결 <span class="muted" style="font-weight:400;font-size:12px">${wStep+1} / ${WIZ.length}</span></h3>
+  <div class="wsteps">${WIZ.map((w,i)=>`<button type="button" class="ws ${i===wStep?'on':i<wStep?'done':''}" data-act="wGo" data-i="${i}" title="${esc(w.t)}"><i>${i<wStep?'✓':i+1}</i><span>${esc(w.t)}</span></button>`).join('')}</div>
+  <form id="sform"><div class="wbody"><h4>${wStep+1}. ${esc(s.t)}</h4>${body}</div>
+  <div class="mact">${wStep>0?'<button type="button" class="btn" data-act="wPrev">이전</button>':'<button type="button" class="btn" data-act="wGo" data-i="'+(WIZ.length-1)+'">URL이 이미 있어요</button>'}<span class="sp"></span><button type="button" class="btn" data-act="close">닫기</button>${last?'<button type="button" class="btn" data-act="wTest">연결 테스트</button><button type="submit" class="btn pri">저장하고 연결</button>':'<button type="button" class="btn pri" data-act="wNext">다음</button>'}</div></form></div></div>`;
+  const c=$('#wCode');if(c)c.value=GAS_CODE;
+}
+async function wizTest(){
+  const url=$('#s_url').value.trim(),key=$('#s_key').value.trim(),out=$('#wRes');
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)){out.innerHTML='<span class="pill bad">확인 필요</span> 주소가 https://script.google.com/macros/s/…/exec 형태인지 확인해 주세요. (끝이 /dev 이면 배포 URL이 아닙니다)';return false}
+  out.innerHTML='<span class="muted">연결 확인 중…</span>';
+  try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'load',key})});const j=await r.json();
+    if(j.ok){out.innerHTML='<span class="pill ok">연결 성공</span> 저장하고 연결을 눌러 주세요.';return true}
+    out.innerHTML=j.code==='auth'?'<span class="pill bad">키 오류</span> 팀 접속 키가 맞지 않습니다.':'<span class="pill bad">서버 오류</span> '+esc(j.error||'');return false}
+  catch(e){out.innerHTML='<span class="pill bad">연결 실패</span> 배포 시 액세스 권한을 <b>모든 사용자</b>로 했는지, 권한 승인을 마쳤는지 확인해 주세요.';return false}
+}
+async function wizAct(a,d){
+  if(a==='wNext'){wStep=Math.min(WIZ.length-1,wStep+1);drawWiz()}
+  else if(a==='wPrev'){wStep=Math.max(0,wStep-1);drawWiz()}
+  else if(a==='wGo'){wStep=Number(d.i);drawWiz()}
+  else if(a==='wTest')wizTest();
+  else if(a==='wCopy'){const c=$('#wCode'),m=$('#wCopied');try{await navigator.clipboard.writeText(GAS_CODE);m.textContent='복사했습니다. Apps Script 편집기에 붙여넣으세요.'}catch(e){c.focus();c.select();document.execCommand&&document.execCommand('copy');m.textContent='코드가 선택되었습니다. Ctrl+C로 복사하세요.'}}
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='sform')return;e.preventDefault();
+  if(!(await wizTest()))return;
+  lsSet('bu2api',$('#s_url').value.trim());lsSet('bu2key',$('#s_key').value.trim());closeModal();lastSig='';toast('서버에 연결했습니다');initDb()});
+
+// ---------- nav ----------
+function navHtml(){
+  const open=S.troubles.filter(t=>t.status!=='완료').length;
+  return TABS.map(t=>`<button class="tab${t.k===tab?' on':''}" data-tab="${t.k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg>${t.l}${t.k==='trouble'&&open?`<span class="n">${open}</span>`:''}</button>`).join('');
+}
+function renderNav(){
+  $('#rail').innerHTML=`<div class="brand"><b>BU2 셋업 보드</b><span>기술운영4그룹</span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><button class="btn sm" data-act="server">서버 설정</button></div>`;
+  $('#mobnav').innerHTML=navHtml();
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-tab]');
+  if(t){tab=t.dataset.tab;try{localStorage.setItem('bu2tab',tab)}catch(_){}try{history.replaceState(null,'','#'+tab)}catch(_){}render();window.scrollTo(0,0);return}
+  const a=e.target.closest('[data-act]');if(a)act(a.dataset.act,a.dataset,e,a);
+});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(TABS.some(t=>t.k===h)){tab=h;render()}});
+
+// ---------- render ----------
+function render(){
+  renderNav();
+  const v=$('#view');
+  const sx=(v.querySelector('.tl')||{}).scrollLeft;
+  let h='';
+  if(dbState==='nourl')h+=`<div class="banner">아직 데이터 서버(Google Apps Script)가 연결되지 않았습니다. 버튼을 누르면 6단계 안내를 따라 연결할 수 있습니다. <button class="btn sm" data-act="server">서버 연결 시작</button></div>`;
+  else if(dbState==='auth')h+=`<div class="banner">팀 접속 키가 맞지 않습니다. 관리자에게 키를 받아 입력해 주세요. <button class="btn sm" data-act="server">서버 설정</button></div>`;
+  else if(dbState==='off')h+=`<div class="banner">데이터 서버에 연결할 수 없습니다. 인터넷 연결과 Apps Script 배포 상태를 확인해 주세요. 지금은 데이터를 저장할 수 없습니다. <button class="btn sm" data-act="server">서버 설정</button></div>`;
+  else if(!canWrite)h+=`<div class="banner">보기 권한으로 열려 있어 내용을 바꿀 수 없습니다. 편집이 필요하면 소유자에게 Contributor 이상 권한을 요청하세요.</div>`;
+  h+=({home:vHome,gantt:vGantt,people:vPeople,progress:vProgress,trouble:vTrouble,admin:vAdmin}[tab])();
+  v.innerHTML=h;
+  const tl=v.querySelector('.tl');if(tl&&sx!=null)tl.scrollLeft=sx;
+}
+function header(title,sub,btns){return `<div class="head"><h1>${title}</h1>${sub?`<span class="sub">${sub}</span>`:''}<span class="sp"></span>${btns||''}</div>`}
+function emptyBox(t,d,btn){return `<div class="empty"><b>${t}</b><span>${d}</span>${btn||''}</div>`}
+function needBase(){
+  if(!S.sites.length||!S.members.length)return `<div class="panel">${emptyBox('기준정보부터 등록해 주세요','사이트와 인원을 먼저 등록하면 셋업·스케쥴·트러블을 입력할 수 있습니다.','<button class="btn pri" data-tab="admin">기준정보로 이동</button>')}</div>`;
+  return '';
+}
+
+// ---------- HOME ----------
+function vHome(){
+  const t=today(),ts=fd(t);
+  const act=S.equips.filter(e=>e.status==='진행');
+  const avg=act.length?Math.round(act.reduce((a,e)=>a+eqProg(e),0)/act.length):0;
+  const onsite=S.schedules.filter(s=>s.start<=ts&&(s.end||s.start)>=ts&&FIELD_TYPES.includes(s.type));
+  const openT=S.troubles.filter(x=>x.status!=='완료');
+  const hiT=openT.filter(x=>x.pri==='상').length;
+  const lateItems=[];
+  for(const e of S.equips)for(const i of (e.items||[]))if(itemLate(i))lateItems.push({e,i});
+  const wkEnd=fd(addD(t,7));
+  const upcoming=S.schedules.filter(s=>s.start>ts&&s.start<=wkEnd).sort((a,b)=>a.start.localeCompare(b.start));
+  let h=header('홈',`${t.getFullYear()}년 ${t.getMonth()+1}월 ${t.getDate()}일 (${DOW[t.getDay()]})`);
+  h+=`<div class="kpis">
+    <div class="kpi"><div class="l">셋업 진행 설비</div><div class="v">${act.length}</div><div class="h">평균 진행율 ${avg}%</div></div>
+    <div class="kpi"><div class="l">오늘 현장 인원</div><div class="v">${new Set(onsite.map(s=>s.member)).size}</div><div class="h">셋업·현장지원·A/S 기준</div></div>
+    <div class="kpi"><div class="l">미결 트러블</div><div class="v" style="color:${openT.length?'var(--bad)':'inherit'}">${openT.length}</div><div class="h">우선순위 상 ${hiT}건</div></div>
+    <div class="kpi"><div class="l">지연 항목</div><div class="v" style="color:${lateItems.length?'var(--warn)':'inherit'}">${lateItems.length}</div><div class="h">계획일 지난 미완료 셋업 항목</div></div>
+  </div>`;
+  h+=`<div class="grid2">`;
+  h+=`<div class="panel"><h2>오늘 현장 인원<span class="sp"></span><button class="btn sm" data-tab="people">스케쥴</button></h2><div class="body"><div class="list">${onsite.length?onsite.map(s=>`<div class="li"><span class="pill acc">${esc(s.type)}</span><span class="t"><b>${esc(memberName(s.member))}</b> · ${esc(siteName(s.site))}</span><span class="m mono">~${short(s.end||s.start)}</span></div>`).join(''):'<div class="muted">오늘 현장 일정이 없습니다.</div>'}</div></div></div>`;
+  h+=`<div class="panel"><h2>미결 트러블<span class="sp"></span><button class="btn sm" data-tab="trouble">전체</button></h2><div class="body"><div class="list">${openT.length?openT.sort(trSort).slice(0,6).map(x=>`<div class="li click" data-act="editTr" data-id="${x.id}" style="cursor:pointer"><span class="pill ${x.pri==='상'?'bad':x.pri==='중'?'warn':''}">${esc(x.pri||'-')}</span><span class="t">${esc(x.title)}</span><span class="m">${esc(siteName(x.site))} · ${diff(pd(x.date)||t,t)}일째</span></div>`).join(''):'<div class="muted">미결 트러블이 없습니다.</div>'}</div></div></div>`;
+  h+=`<div class="panel"><h2>셋업 진행 설비<span class="sp"></span><button class="btn sm" data-tab="progress">진행율</button></h2><div class="body"><div class="list">${act.length?act.map(e=>{const p=eqProg(e);return `<div class="li"><span class="t"><b>${esc(equipName(e.id))}</b> <span class="muted">· ${esc(siteName(e.site))}</span></span><div class="bar" style="width:90px"><i style="width:${p}%"></i></div><span class="m mono" style="width:36px;text-align:right">${p}%</span></div>`}).join(''):'<div class="muted">진행 중인 셋업이 없습니다.</div>'}</div></div></div>`;
+  h+=`<div class="panel"><h2>다가오는 7일 일정</h2><div class="body"><div class="list">${upcoming.length?upcoming.slice(0,8).map(s=>`<div class="li"><span class="m mono" style="width:44px">${short(s.start)}</span><span class="pill">${esc(s.type)}</span><span class="t">${esc(memberName(s.member))} · ${esc(siteName(s.site))}</span></div>`).join(''):'<div class="muted">예정된 일정이 없습니다.</div>'}${lateItems.length?`<div class="li"><span class="pill warn">지연</span><span class="t">${lateItems.slice(0,3).map(x=>esc(equipName(x.e.id)+' '+x.i.name)).join(', ')}${lateItems.length>3?' 외 '+(lateItems.length-3)+'건':''}</span></div>`:''}</div></div></div>`;
+  h+=`</div>`;
+  h+=vJira();
+  return h;
+}
+
+// ---------- TIMELINE ----------
+const ZOOM={week:{w:30,days:42,step:7},month:{w:11,days:120,step:30}};
+function tlStart(key){if(!ui[key]){const t=today();ui[key]=addD(t,-((t.getDay()+6)%7)-7)}return ui[key]}
+function lanes(bars){const ends=[];for(const b of bars.sort((a,c)=>a.s-c.s)){let l=ends.findIndex(e=>e<b.s);if(l<0){l=ends.length;ends.push(0)}ends[l]=b.f;b.lane=l}return Math.max(1,ends.length)}
+function timeline(rows,zoomKey,startKey){
+  const z=ZOOM[ui[zoomKey]],st=tlStart(startKey),W=z.w*z.days,t=today();
+  let hm='',hd='',bg='';
+  let cur=null,cs=0;
+  for(let i=0;i<=z.days;i++){
+    const d=addD(st,i),k=d.getFullYear()+'.'+(d.getMonth()+1);
+    if(k!==cur||i===z.days){if(cur)hm+=`<div style="width:${(i-cs)*z.w}px">${cur}</div>`;cur=k;cs=i}
+    if(i===z.days)break;
+    const we=d.getDay()===0||d.getDay()===6,td=+d===+t;
+    if(ui[zoomKey]==='week')hd+=`<div class="${we?'we':''}${td?' td':''}" style="width:${z.w}px">${d.getDate()}<br>${DOW[d.getDay()]}</div>`;
+    else if(d.getDay()===1)hd+=`<div style="position:absolute;left:${i*z.w}px;width:${7*z.w}px;text-align:left;padding-left:3px">${d.getDate()}</div>`;
+    if(we&&ui[zoomKey]==='week')bg+=`<div class="we-bg" style="left:${i*z.w}px;width:${z.w}px"></div>`;
+    if(d.getDay()===1)bg+=`<div class="gl" style="left:${i*z.w}px"></div>`;
+  }
+  const ti=diff(st,t);const tdl=ti>=0&&ti<z.days?`<div class="today" style="left:${ti*z.w+z.w/2}px"></div>`:'';
+  let h=`<div class="tl"><div class="tl-in" style="width:${220+W}px">`;
+  h+=`<div class="tl-row tl-head"><div class="tl-lab">${ui[zoomKey]==='week'?'일 단위':'주 단위 (월요일)'}</div><div class="tl-trk" style="width:${W}px"><div class="hm">${hm}</div><div class="hd" style="position:relative;${ui[zoomKey]==='month'?'height:18px':''}">${hd}</div></div></div>`;
+  for(const r of rows){
+    if(r.group){h+=`<div class="tl-row grp"><div class="tl-lab grp">${esc(r.group)}</div><div class="tl-trk" style="width:${W}px"></div></div>`;continue}
+    const bars=(r.bars||[]).filter(b=>b.s);
+    const n=lanes(bars);const H=Math.max(34,n*24+8);
+    let bh='';
+    for(const b of bars){
+      let a=diff(st,b.s),e=diff(st,b.f||b.s)+1;
+      if(e<=0||a>=z.days)continue;a=Math.max(a,0);e=Math.min(e,z.days);
+      const w=Math.max((e-a)*z.w-2,6);
+      bh+=`<button class="bk ${b.cls||''}" style="left:${a*z.w+1}px;width:${w}px;top:${6+b.lane*24}px;${b.color?'background:'+b.color:''}" title="${esc(b.tip||b.label)}" data-act="${b.act}" data-id="${b.id||''}" data-sub="${b.sub||''}">${b.pct!=null?`<i class="pf" style="width:${b.pct}%"></i>`:''}<span>${esc(b.label||'')}</span></button>`;
+    }
+    h+=`<div class="tl-row ${r.cls||''}" style="min-height:${H}px"><div class="tl-lab" ${r.act?`data-act="${r.act}" data-id="${r.id}" style="cursor:pointer"`:''}><span class="a">${r.lab}</span>${r.sub?`<span class="b">${r.sub}</span>`:''}</div><div class="tl-trk" style="width:${W}px">${bg}${tdl}${bh}</div></div>`;
+  }
+  if(!rows.length)h+=`<div class="empty" style="position:sticky;left:0;width:min(100%,600px)">표시할 항목이 없습니다.</div>`;
+  h+=`</div></div>`;
+  return h;
+}
+function tlBar(zoomKey,startKey,extra){
+  const z=ZOOM[ui[zoomKey]],st=tlStart(startKey),en=addD(st,z.days-1);
+  return `<div class="tlbar"><div class="seg"><button class="${ui[zoomKey]==='week'?'on':''}" data-act="zoom" data-k="${zoomKey}" data-v="week">일</button><button class="${ui[zoomKey]==='month'?'on':''}" data-act="zoom" data-k="${zoomKey}" data-v="month">월</button></div>
+  <button class="btn sm" data-act="shift" data-k="${startKey}" data-z="${zoomKey}" data-d="-1" aria-label="이전">◀</button><button class="btn sm" data-act="shift" data-k="${startKey}" data-z="${zoomKey}" data-d="0">오늘</button><button class="btn sm" data-act="shift" data-k="${startKey}" data-z="${zoomKey}" data-d="1" aria-label="다음">▶</button>
+  <span class="rng">${fd(st)} ~ ${fd(en)}</span><span style="flex:1"></span>${extra||''}</div>`;
+}
+
+// ---------- GANTT ----------
+function vGantt(){
+  const nb=needBase();
+  let h=header('셋업 간트','사이트·설비별 셋업 계획과 실적',canWrite?`<button class="btn pri" data-act="newEq">+ 설비 셋업 등록</button>`:'');
+  if(nb)return h+nb;
+  const rows=[];
+  const sites=[...S.sites].sort(byName);
+  const showDone=ui.gDone;
+  for(const s of sites){
+    const eqs=S.equips.filter(e=>e.site===s.id&&(showDone||e.status!=='완료')).sort((a,b)=>String(a.model+a.unit).localeCompare(String(b.model+b.unit)));
+    if(!eqs.length)continue;
+    rows.push({group:(s.customer?s.customer+' · ':'')+s.name});
+    for(const e of eqs){
+      const rg=eqRange(e),p=eqProg(e),open=ui.open[e.id];
+      const late=(e.items||[]).some(itemLate);
+      rows.push({lab:`${open?'▾':'▸'} ${esc(equipName(e.id))}`,sub:`${esc(memberName(e.owner))} · ${p}% · ${esc(e.status||'')}`,act:'toggleEq',id:e.id,
+        bars:rg?[{s:rg.s,f:rg.f,label:`${equipName(e.id)} ${p}%`,pct:p,cls:'ghost'+(late?' ':''),act:'editEq',id:e.id,tip:`${equipName(e.id)} ${fd(rg.s)}~${fd(rg.f)} 진행 ${p}%`}]:[]});
+      if(open)for(const it of (e.items||[])){
+        const a=pd(it.start),b=pd(it.end)||a;
+        rows.push({cls:'sub',lab:`${it.done?'✓ ':''}${esc(it.name)}`,sub:it.start?`${short(it.start)}~${short(it.end||it.start)}`:'일정 미입력',
+          bars:a?[{s:a,f:b,label:it.name,cls:it.done?'done':itemLate(it)?'late':'todo',act:'toggleItem',id:e.id,sub:it.id,tip:`${it.name} ${it.start}~${it.end||it.start} ${it.done?'완료':'클릭하면 완료 처리'}`}]:[]});
+      }
+    }
+  }
+  h+=`<div class="panel">${tlBar('gZoom','gStart',`<label class="muted" style="font-size:12px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="gDone" data-act="gDone" ${showDone?'checked':''}>완료 설비 보기</label><button class="btn sm" data-act="expandAll">모두 펼치기</button><button class="btn sm" data-act="collapseAll">모두 접기</button>`)}
+  ${timeline(rows,'gZoom','gStart')}
+  <div class="tlbar legend"><span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>설비 전체 일정 (채움 = 진행율)</span><span><i style="background:var(--c5)"></i>예정</span><span><i style="background:var(--ok)"></i>완료</span><span><i style="background:var(--bad)"></i>지연</span><span>설비명을 누르면 항목이 펼쳐지고, 항목 막대를 누르면 완료/미완료가 바뀝니다.</span></div></div>`;
+  return h;
+}
+
+// ---------- PEOPLE ----------
+function vPeople(){
+  const nb=needBase();
+  let h=header('인원 스케쥴','개인별 셋업·출장·휴가 일정',canWrite?`<button class="btn" data-act="csvSch">CSV 내보내기</button><button class="btn pri" data-act="newSch">+ 일정 등록</button>`:`<button class="btn" data-act="csvSch">CSV 내보내기</button>`);
+  if(nb)return h+nb;
+  const mem=[...S.members].sort((a,b)=>(a.order||0)-(b.order||0)||byName(a,b));
+  const t=today(),ms=new Date(t.getFullYear(),t.getMonth(),1),me=new Date(t.getFullYear(),t.getMonth()+1,0);
+  const rows=mem.map(m=>{
+    const list=S.schedules.filter(s=>s.member===m.id&&(!ui.pSite||s.site===ui.pSite));
+    const days=fieldDays(list,ms,me);
+    return {lab:esc(m.name),sub:`${esc(m.title||'')}${m.title?' · ':''}이번 달 현장 ${days}일`,
+      bars:list.map(s=>({s:pd(s.start),f:pd(s.end)||pd(s.start),label:`${s.type} ${s.site?siteName(s.site):''}${s.equip?' '+equipName(s.equip):''}`,color:(SCH_TYPES.find(x=>x.k===s.type)||SCH_TYPES[0]).c,act:'editSch',id:s.id,tip:`${m.name} | ${s.type} | ${siteName(s.site)} | ${s.start}~${s.end||s.start}${s.note?' | '+s.note:''}`}))};
+  });
+  const sel=`<select id="pSite" data-act="pSite"><option value="">전체 사이트</option>${S.sites.sort(byName).map(s=>`<option value="${s.id}" ${ui.pSite===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>`;
+  h+=`<div class="panel">${tlBar('pZoom','pStart',sel)}${timeline(rows,'pZoom','pStart')}<div class="tlbar legend">${SCH_TYPES.map(x=>`<span><i style="background:${x.c}"></i>${x.k}</span>`).join('')}<span>막대를 누르면 수정할 수 있습니다.</span></div></div>`;
+  // monthly summary
+  const months=[];for(let i=5;i>=0;i--)months.push(new Date(t.getFullYear(),t.getMonth()-i,1));
+  months.push(new Date(t.getFullYear(),t.getMonth()+1,1));
+  h+=`<div class="panel"><h2>월별 현장 투입일<span class="muted" style="font-weight:400;font-size:12px">셋업·현장지원·A/S 일수 (주말 포함)</span></h2><div class="tw"><table><thead><tr><th>이름</th>${months.map(m=>`<th class="num">${m.getFullYear()%100}.${m.getMonth()+1}</th>`).join('')}<th class="num">합계</th></tr></thead><tbody>${mem.map(m=>{
+    const list=S.schedules.filter(s=>s.member===m.id);let tot=0;
+    const cells=months.map(mo=>{const v=fieldDays(list,mo,new Date(mo.getFullYear(),mo.getMonth()+1,0));tot+=v;return `<td class="num">${v||'<span class="muted">·</span>'}</td>`}).join('');
+    return `<tr><td>${esc(m.name)}</td>${cells}<td class="num"><b>${tot}</b></td></tr>`}).join('')}</tbody></table></div></div>`;
+  return h;
+}
+function fieldDays(list,a,b){const set=new Set();for(const s of list){if(!FIELD_TYPES.includes(s.type))continue;let x=pd(s.start),y=pd(s.end)||x;if(!x)continue;if(x<a)x=a;if(y>b)y=b;for(let d=x;d<=y;d=addD(d,1))set.add(+d)}return set.size}
+
+// ---------- PROGRESS ----------
+function vProgress(){
+  const nb=needBase();
+  let h=header('설비 진행율','호기별 셋업 체크리스트',canWrite?`<button class="btn pri" data-act="newEq">+ 설비 셋업 등록</button>`:'');
+  if(nb)return h+nb;
+  const sel=`<select id="prSite" data-act="prSite"><option value="">전체 사이트</option>${S.sites.sort(byName).map(s=>`<option value="${s.id}" ${ui.prSite===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>`;
+  h+=`<div class="head">${sel}<label class="muted" style="font-size:12px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="prDone" data-act="prDone" ${ui.prDone?'checked':''}>완료 설비 보기</label></div>`;
+  const sites=S.sites.filter(s=>!ui.prSite||s.id===ui.prSite).sort(byName);
+  let any=false;
+  for(const s of sites){
+    const eqs=S.equips.filter(e=>e.site===s.id&&(ui.prDone||e.status!=='완료'));
+    if(!eqs.length)continue;any=true;
+    const avg=Math.round(eqs.reduce((a,e)=>a+eqProg(e),0)/eqs.length);
+    h+=`<div class="sitehd">${esc((s.customer?s.customer+' · ':'')+s.name)}<span class="pill">${eqs.length}대 · 평균 ${avg}%</span></div><div class="cards">`;
+    for(const e of eqs){
+      const p=eqProg(e),st=e.status||'대기';
+      h+=`<div class="card"><div class="ch"><div class="ti"><b>${esc(equipName(e.id))}</b><span>${esc(memberName(e.owner))}${e.note?' · '+esc(e.note):''}</span></div><span class="pill ${st==='완료'?'ok':st==='진행'?'acc':st==='보류'?'warn':''}">${esc(st)}</span><span class="pc">${p}<small style="font-size:12px">%</small></span></div>
+      <div class="pb"><div class="bar"><i class="${p===100?'done':''}" style="width:${p}%"></i></div></div>
+      <div class="chk">${(e.items||[]).map(i=>`<label class="${i.done?'d':''}"><input type="checkbox" ${i.done?'checked':''} ${canWrite?'':'disabled'} data-act="chkItem" data-id="${e.id}" data-sub="${i.id}"><span class="nm">${esc(i.name)}</span><span class="dt ${itemLate(i)?'late':''}">${i.end?short(i.end):''}</span></label>`).join('')||'<span class="muted" style="padding:6px">체크 항목이 없습니다.</span>'}</div>
+      <div style="padding:0 14px 12px;display:flex;gap:6px"><button class="btn sm" data-act="editEq" data-id="${e.id}">수정</button><button class="btn sm" data-act="newTrFor" data-id="${e.id}">트러블 등록</button><span style="flex:1"></span><span class="muted" style="font-size:12px">트러블 ${S.troubles.filter(x=>x.equip===e.id&&x.status!=='완료').length}건 미결</span></div></div>`;
+    }
+    h+=`</div>`;
+  }
+  if(!any)h+=`<div class="panel">${emptyBox('등록된 셋업 설비가 없습니다','설비 셋업을 등록하면 기본 체크리스트(반입~Buy-off)가 함께 만들어집니다.',canWrite?'<button class="btn pri" data-act="newEq">+ 설비 셋업 등록</button>':'')}</div>`;
+  return h;
+}
+
+// ---------- TROUBLE ----------
+function trSort(a,b){const o={상:0,중:1,하:2};return (o[a.pri]??3)-(o[b.pri]??3)||String(b.date).localeCompare(String(a.date))}
+function trFiltered(){
+  const f=ui.trF,q=f.q.trim().toLowerCase();
+  return S.troubles.filter(x=>(!f.site||x.site===f.site)&&(!f.cat||x.cat===f.cat)&&(f.status==='all'||(f.status==='open'?x.status!=='완료':x.status===f.status))
+    &&(!q||[x.title,x.symptom,x.cause,x.action,memberName(x.owner),equipName(x.equip)].join(' ').toLowerCase().includes(q)))
+    .sort((a,b)=>(b.no||0)-(a.no||0));
+}
+function vTrouble(){
+  const nb=needBase();
+  let h=header('트러블 리스트','설비 이슈 접수부터 조치 완료까지',`<button class="btn" data-act="csvTr">CSV 내보내기</button>`+(canWrite?`<button class="btn pri" data-act="newTr">+ 트러블 등록</button>`:''));
+  if(nb)return h+nb;
+  const f=ui.trF,list=trFiltered(),t=today();
+  const cnt=k=>S.troubles.filter(x=>x.status===k).length;
+  h+=`<div class="kpis">${TR_STATUS.map(k=>`<div class="kpi"><div class="l">${k}</div><div class="v">${cnt(k)}</div></div>`).join('')}</div>`;
+  h+=`<div class="panel"><div class="filters">
+    <select id="trSite" data-act="trF" data-k="site"><option value="">전체 사이트</option>${S.sites.sort(byName).map(s=>`<option value="${s.id}" ${f.site===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
+    <select id="trSt" data-act="trF" data-k="status"><option value="open" ${f.status==='open'?'selected':''}>미결 전체</option><option value="all" ${f.status==='all'?'selected':''}>전체 상태</option>${TR_STATUS.map(s=>`<option ${f.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    <select id="trCat" data-act="trF" data-k="cat"><option value="">전체 구분</option>${TR_CAT.map(s=>`<option ${f.cat===s?'selected':''}>${s}</option>`).join('')}</select>
+    <input type="search" id="trQ" placeholder="제목·증상·조치·담당 검색" value="${esc(f.q)}" style="flex:1;min-width:160px">
+    <span class="muted" style="font-size:12px">${list.length}건</span></div>
+  <div class="tw">${list.length?`<table><thead><tr><th class="num">No</th><th>발생일</th><th>우선</th><th>상태</th><th>사이트 / 설비</th><th>구분</th><th>제목</th><th>담당</th><th class="num">경과</th><th>완료일</th></tr></thead><tbody>${list.map(x=>{
+    const d=pd(x.date),age=d?diff(d,x.status==='완료'&&pd(x.closed)?pd(x.closed):t):'';
+    return `<tr class="click" data-act="editTr" data-id="${x.id}"><td class="num">${x.no||''}</td><td class="mono">${esc(x.date||'')}</td><td><span class="pill ${x.pri==='상'?'bad':x.pri==='중'?'warn':''}">${esc(x.pri||'-')}</span></td><td><span class="pill ${x.status==='완료'?'ok':x.status==='진행'?'acc':x.status==='모니터링'?'warn':'bad'}">${esc(x.status)}</span></td><td>${esc(siteName(x.site))}<div class="muted" style="font-size:12px">${esc(equipName(x.equip))}</div></td><td>${esc(x.cat||'')}</td><td style="min-width:220px"><b>${esc(x.title)}</b>${x.action?`<div class="muted" style="font-size:12px">조치: ${esc(String(x.action).slice(0,60))}${String(x.action).length>60?'…':''}</div>`:''}</td><td>${esc(memberName(x.owner))}</td><td class="num">${age!==''?age+'일':''}</td><td class="mono">${esc(x.closed||'')}</td></tr>`}).join('')}</tbody></table>`:emptyBox(S.troubles.length?'조건에 맞는 트러블이 없습니다':'등록된 트러블이 없습니다',S.troubles.length?'필터를 바꿔 보세요.':'현장에서 발생한 이슈를 등록하면 상태·담당·조치 이력을 함께 관리할 수 있습니다.',!S.troubles.length&&canWrite?'<button class="btn pri" data-act="newTr">+ 트러블 등록</button>':'')}</div></div>`;
+  return h;
+}
+
+// ---------- ADMIN ----------
+function vAdmin(){
+  let h=header('기준정보','사이트·인원은 모든 탭에서 공통으로 쓰입니다');
+  h+=`<div class="grid2">`;
+  h+=`<div class="panel"><h2>사이트 <span class="pill">${S.sites.length}</span><span class="sp"></span>${canWrite?'<button class="btn sm pri" data-act="newSite">+ 사이트</button>':''}</h2>${S.sites.length?`<div class="tw"><table><thead><tr><th>고객사</th><th>사이트</th><th>지역</th><th class="num">설비</th></tr></thead><tbody>${[...S.sites].sort(byName).map(s=>`<tr class="click" data-act="editSite" data-id="${s.id}"><td>${esc(s.customer||'')}</td><td><b>${esc(s.name)}</b></td><td>${esc(s.region||'')}</td><td class="num">${S.equips.filter(e=>e.site===s.id).length}</td></tr>`).join('')}</tbody></table></div>`:emptyBox('사이트가 없습니다','예: LGIT 구미 / 삼성전기 부산 / SEMV 베트남',canWrite?'<button class="btn pri" data-act="newSite">+ 사이트</button>':'')}</div>`;
+  h+=`<div class="panel"><h2>인원 <span class="pill">${S.members.length}</span><span class="sp"></span>${canWrite?'<button class="btn sm pri" data-act="newMem">+ 인원</button>':''}</h2>${S.members.length?`<div class="tw"><table><thead><tr><th>이름</th><th>직급·역할</th><th>연락처</th><th>Jira</th><th class="num">순서</th></tr></thead><tbody>${[...S.members].sort((a,b)=>(a.order||0)-(b.order||0)||byName(a,b)).map(m=>`<tr class="click" data-act="editMem" data-id="${m.id}"><td><b>${esc(m.name)}</b></td><td>${esc(m.title||'')}</td><td class="mono">${esc(m.phone||'')}</td><td>${!m.jira?'<span class="muted">–</span>':jiraAcc(m)?'<span class="pill ok">확인됨</span>':'<span class="pill warn">확인 필요</span>'}</td><td class="num">${m.order||''}</td></tr>`).join('')}</tbody></table></div>`:emptyBox('인원이 없습니다','스케쥴과 담당자 지정에 쓰입니다.',canWrite?'<button class="btn pri" data-act="newMem">+ 인원</button>':'')}</div>`;
+  h+=`</div>`;
+  h+=vJiraAdmin();
+  h+=`<div class="panel"><h2>설비 목록 <span class="pill">${S.equips.length}</span><span class="sp"></span>${canWrite&&S.sites.length?'<button class="btn sm pri" data-act="newEq">+ 설비 셋업</button>':''}</h2>${S.equips.length?`<div class="tw"><table><thead><tr><th>사이트</th><th>모델</th><th>호기</th><th>담당</th><th>상태</th><th>기간</th><th class="num">진행율</th></tr></thead><tbody>${[...S.equips].sort((a,b)=>siteName(a.site).localeCompare(siteName(b.site),'ko')).map(e=>{const r=eqRange(e);return `<tr class="click" data-act="editEq" data-id="${e.id}"><td>${esc(siteName(e.site))}</td><td><b>${esc(e.model)}</b></td><td>${esc(e.unit||'')}</td><td>${esc(memberName(e.owner))}</td><td>${esc(e.status||'')}</td><td class="mono">${r?fd(r.s)+' ~ '+fd(r.f):'–'}</td><td class="num">${eqProg(e)}%</td></tr>`}).join('')}</tbody></table></div>`:emptyBox('설비가 없습니다','사이트를 등록한 뒤 설비 셋업을 추가하세요.','')}</div>`;
+  return h;
+}
+
+// ---------- modal ----------
+let modalCtx=null;
+function opts(list,val,ph){return (ph!=null?`<option value="">${ph}</option>`:'')+list.map(o=>{const v=typeof o==='object'?o.v:o,l=typeof o==='object'?o.l:o;return `<option value="${esc(v)}" ${String(val??'')===String(v)?'selected':''}>${esc(l)}</option>`}).join('')}
+const siteOpts=()=>[...S.sites].sort(byName).map(s=>({v:s.id,l:(s.customer?s.customer+' · ':'')+s.name}));
+const memOpts=()=>[...S.members].sort(byName).map(m=>({v:m.id,l:m.name}));
+const eqOpts=site=>S.equips.filter(e=>!site||e.site===site).map(e=>({v:e.id,l:equipName(e.id)+(site?'':' · '+siteName(e.site))}));
+function field(f,v){
+  const req=f.req?'<em>*</em>':'',id='f_'+f.k;
+  let inp;
+  if(f.t==='select')inp=`<select id="${id}" name="${f.k}" ${f.req?'required':''}>${opts(f.o,v,f.ph)}</select>`;
+  else if(f.t==='area')inp=`<textarea id="${id}" name="${f.k}">${esc(v||'')}</textarea>`;
+  else inp=`<input id="${id}" name="${f.k}" type="${f.t||'text'}" value="${esc(v??'')}" ${f.req?'required':''} ${f.ph?`placeholder="${esc(f.ph)}"`:''}>`;
+  return `<div class="fld ${f.full?'full':''}"><label for="${id}">${f.l}${req}</label>${inp}</div>`;
+}
+function openModal(title,fields,data,col,extraHtml){
+  modalCtx={col,id:data&&data.id,data:data||{},fields};
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h3>${esc(title)}</h3><form id="mform">${fields.map(f=>field(f,(data||{})[f.k])).join('')}${extraHtml||''}
+  <div class="mact">${data&&data.id&&canWrite?'<button type="button" class="btn danger" data-act="del">삭제</button>':''}<span class="sp"></span><button type="button" class="btn" data-act="close">취소</button>${canWrite?'<button type="submit" class="btn pri">저장</button>':''}</div></form></div></div>`;
+  const first=$('#mform input,#mform select');if(first)first.focus();
+}
+function closeModal(){$('#modalRoot').innerHTML='';modalCtx=null}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalCtx)closeModal()});
+document.addEventListener('submit',async e=>{
+  if(e.target.id==='jform'){e.preventDefault();return}
+  if(e.target.id!=='mform')return;e.preventDefault();
+  const fd_=new FormData(e.target),o=Object.assign({},strip(modalCtx.data));
+  for(const f of modalCtx.fields){let v=fd_.get(f.k);if(f.t==='number')v=v===''?null:Number(v);o[f.k]=v==null?'':v}
+  if(modalCtx.col==='equips'){o.items=readItems();if(!o.status)o.status='대기'}
+  if(modalCtx.col==='members'){o.jira=String(o.jira||'').trim();if(o.jira!==modalCtx.data.jira){delete o.jiraId;delete o.jiraSrc;delete o.jiraName}}
+  if(modalCtx.col==='schedules'&&o.end&&o.end<o.start){toast('종료일이 시작일보다 빠릅니다');return}
+  if(modalCtx.col==='troubles'){
+    if(!modalCtx.id)o.no=S.troubles.reduce((m,x)=>Math.max(m,x.no||0),0)+1;
+    if(o.status==='완료'&&!o.closed)o.closed=fd(today());
+  }
+  o.updated=new Date().toISOString();
+  const btn=e.target.querySelector('[type=submit]');if(btn){btn.disabled=true;btn.textContent='저장 중…'}
+  if(await save(modalCtx.col,modalCtx.id,o)){closeModal();toast('저장했습니다')}else if(btn){btn.disabled=false;btn.textContent='저장'}
+});
+function itemsHtml(items){
+  return `<div class="items"><label style="font-size:12px;color:var(--muted);font-weight:500">셋업 체크 항목 (완료 · 항목명 · 시작 · 종료)</label><div id="itemList">${items.map(itemRow).join('')}</div><div style="display:flex;gap:6px"><button type="button" class="btn sm" data-act="addItem">+ 항목 추가</button><button type="button" class="btn sm" data-act="fillDates">시작일부터 2일씩 자동 배정</button></div></div>`;
+}
+function itemRow(i){return `<div class="irow" data-iid="${esc(i.id)}"><input type="checkbox" class="i-done" ${i.done?'checked':''} aria-label="완료"><input type="text" class="i-name" value="${esc(i.name)}" aria-label="항목명"><input type="date" class="i-s" value="${esc(i.start||'')}" aria-label="시작"><input type="date" class="i-e" value="${esc(i.end||'')}" aria-label="종료"><button type="button" class="x" data-act="rmItem" aria-label="항목 삭제">×</button></div>`}
+function readItems(){return [...document.querySelectorAll('#itemList .irow')].map(r=>({id:r.dataset.iid,name:r.querySelector('.i-name').value.trim(),start:r.querySelector('.i-s').value,end:r.querySelector('.i-e').value,done:r.querySelector('.i-done').checked})).filter(i=>i.name)}
+
+const F={
+  site:[{k:'customer',l:'고객사',ph:'예: LGIT'},{k:'name',l:'사이트명',req:1,ph:'예: 구미 A3'},{k:'region',l:'지역',ph:'예: 국내 / 베트남'},{k:'note',l:'메모'}],
+  mem:[{k:'name',l:'이름',req:1},{k:'title',l:'직급·역할'},{k:'phone',l:'연락처'},{k:'order',l:'표시 순서',t:'number'},{k:'jira',l:'Jira 계정 (회사 이메일 또는 accountId)',full:1,ph:'예: hong@intekplus.com'}],
+  eq:()=>[{k:'site',l:'사이트',t:'select',o:siteOpts(),req:1,ph:'선택'},{k:'model',l:'모델',req:1,ph:'예: iPIS-590'},{k:'unit',l:'호기',ph:'예: 5'},{k:'owner',l:'담당자',t:'select',o:memOpts(),ph:'선택'},{k:'status',l:'상태',t:'select',o:EQ_STATUS},{k:'note',l:'메모',ph:'예: AFVI005'}],
+  sch:()=>[{k:'member',l:'인원',t:'select',o:memOpts(),req:1,ph:'선택'},{k:'type',l:'구분',t:'select',o:SCH_TYPES.map(x=>x.k)},{k:'start',l:'시작일',t:'date',req:1},{k:'end',l:'종료일',t:'date'},{k:'site',l:'사이트',t:'select',o:siteOpts(),ph:'(없음)'},{k:'equip',l:'설비',t:'select',o:eqOpts(),ph:'(없음)'},{k:'note',l:'메모',full:1}],
+  tr:()=>[{k:'date',l:'발생일',t:'date',req:1},{k:'status',l:'상태',t:'select',o:TR_STATUS},{k:'site',l:'사이트',t:'select',o:siteOpts(),req:1,ph:'선택'},{k:'equip',l:'설비',t:'select',o:eqOpts(),ph:'(없음)'},{k:'cat',l:'구분',t:'select',o:TR_CAT},{k:'pri',l:'우선순위',t:'select',o:TR_PRI},{k:'owner',l:'담당자',t:'select',o:memOpts(),ph:'선택'},{k:'closed',l:'조치 완료일',t:'date'},{k:'title',l:'제목',req:1,full:1},{k:'symptom',l:'현상',t:'area',full:1},{k:'cause',l:'원인',t:'area',full:1},{k:'action',l:'조치 내용',t:'area',full:1}]
+};
+
+// ---------- actions ----------
+let armT=null;
+async function act(a,d,ev,el){
+  const get=(c,id)=>S[c].find(x=>x.id===id);
+  switch(a){
+    case 'zoom':ui[d.k]=d.v;render();break;
+    case 'shift':{const k=d.k,z=ZOOM[ui[d.z]];if(d.d==='0'){ui[k]=null}else ui[k]=addD(tlStart(k),Number(d.d)*z.step*(ui[d.z]==='week'?1:1));render();break}
+    case 'toggleEq':ui.open[d.id]=!ui.open[d.id];render();break;
+    case 'expandAll':S.equips.forEach(e=>ui.open[e.id]=true);render();break;
+    case 'collapseAll':ui.open={};render();break;
+    case 'gDone':ui.gDone=el.checked;render();break;
+    case 'prDone':ui.prDone=el.checked;render();break;
+    case 'toggleItem':case 'chkItem':{
+      if(!canWrite)return;
+      const e=get('equips',d.id);if(!e)return;
+      const items=(e.items||[]).map(i=>i.id===d.sub?Object.assign({},i,{done:!i.done}):i);
+      const o=strip(e);o.items=items;if(items.length&&items.every(i=>i.done))o.status='완료';else if(items.some(i=>i.done)&&o.status==='대기')o.status='진행';
+      await save('equips',e.id,o);break}
+    case 'newSite':openModal('사이트 등록',F.site,null,'sites');break;
+    case 'editSite':openModal('사이트 수정',F.site,get('sites',d.id),'sites');break;
+    case 'newMem':openModal('인원 등록',F.mem,null,'members');break;
+    case 'editMem':openModal('인원 수정',F.mem,get('members',d.id),'members');break;
+    case 'newEq':{if(!S.sites.length){toast('사이트를 먼저 등록하세요');return}
+      openModal('설비 셋업 등록',F.eq(),{status:'진행'},'equips',itemsHtml(DEFAULT_ITEMS.map(n=>({id:uid(),name:n}))));break}
+    case 'editEq':{const e=get('equips',d.id);if(e)openModal('설비 셋업 수정',F.eq(),e,'equips',itemsHtml(e.items||[]));break}
+    case 'addItem':$('#itemList').insertAdjacentHTML('beforeend',itemRow({id:uid(),name:''}));$('#itemList .irow:last-child .i-name').focus();break;
+    case 'rmItem':el.closest('.irow').remove();break;
+    case 'fillDates':{const rows=[...document.querySelectorAll('#itemList .irow')];const first=rows.find(r=>r.querySelector('.i-s').value);let d0=first?pd(first.querySelector('.i-s').value):today();
+      for(const r of rows){r.querySelector('.i-s').value=fd(d0);r.querySelector('.i-e').value=fd(addD(d0,1));d0=addD(d0,2)}toast('첫 시작일 기준으로 2일씩 배정했습니다');break}
+    case 'newSch':openModal('일정 등록',F.sch(),{type:'셋업',start:fd(today())},'schedules');break;
+    case 'editSch':openModal('일정 수정',F.sch(),get('schedules',d.id),'schedules');break;
+    case 'newTr':openModal('트러블 등록',F.tr(),{date:fd(today()),status:'접수',pri:'중',cat:'HW'},'troubles');break;
+    case 'newTrFor':{const e=get('equips',d.id);openModal('트러블 등록',F.tr(),{date:fd(today()),status:'접수',pri:'중',cat:'HW',site:e.site,equip:e.id,owner:e.owner},'troubles');break}
+    case 'editTr':{const t=get('troubles',d.id);if(t)openModal(`트러블 #${t.no||''} 수정`,F.tr(),t,'troubles');break}
+    case 'close':closeModal();break;
+    case 'scrim':if(ev.target===el)closeModal();break;
+    case 'del':{
+      if(!el.classList.contains('arm')){el.classList.add('arm');el.textContent='한 번 더 누르면 삭제';clearTimeout(armT);armT=setTimeout(()=>{if(el.isConnected){el.classList.remove('arm');el.textContent='삭제'}},3000);return}
+      const {col,id}=modalCtx;closeModal();await del(col,id);break}
+    case 'csvTr':exportCsv('트러블리스트',['No','발생일','상태','우선순위','사이트','설비','구분','제목','현상','원인','조치','담당','완료일'],trFiltered().map(x=>[x.no,x.date,x.status,x.pri,siteName(x.site),equipName(x.equip),x.cat,x.title,x.symptom,x.cause,x.action,memberName(x.owner),x.closed]));break;
+    case 'server':openServer();break;
+    case 'wNext':case 'wPrev':case 'wGo':case 'wTest':case 'wCopy':wizAct(a,d);break;
+    default:if(a.startsWith('j'))jiraAct(a,d,el);break;
+    case 'csvSch':exportCsv('인원스케쥴',['이름','구분','시작','종료','사이트','설비','메모'],[...S.schedules].sort((a,b)=>String(a.start).localeCompare(String(b.start))).map(s=>[memberName(s.member),s.type,s.start,s.end,s.site?siteName(s.site):'',equipName(s.equip),s.note]));break;
+  }
+}
+document.addEventListener('change',e=>{
+  const el=e.target,a=el.dataset&&el.dataset.act;
+  if(a==='trF'){ui.trF[el.dataset.k]=el.value;render()}
+  else if(a==='pSite'){ui.pSite=el.value;render()}
+  else if(a==='prSite'){ui.prSite=el.value;render()}
+  else if(el.id==='f_site'&&modalCtx&&(modalCtx.col==='troubles'||modalCtx.col==='schedules')){
+    const sel=$('#f_equip');if(sel){const cur=sel.value;sel.innerHTML=opts(eqOpts(el.value),cur,'(없음)')}
+  }
+});
+let qT=null;
+document.addEventListener('input',e=>{if(e.target.id==='trQ'){clearTimeout(qT);const v=e.target.value;qT=setTimeout(()=>{ui.trF.q=v;render();const q=$('#trQ');if(q){q.focus();q.setSelectionRange(v.length,v.length)}},250)}});
+// checkbox clicks inside labels trigger data-act on the input; prevent double handling via label
+document.addEventListener('click',e=>{const l=e.target.closest('.chk label');if(l&&e.target.tagName!=='INPUT'){e.preventDefault();const i=l.querySelector('input');if(i&&!i.disabled)i.click()}},true);
+
+// ---------- JIRA (Apps Script가 Jira REST API를 대신 호출) ----------
+let JC={};
+const J={state:'init',issues:[],err:null,at:null,key:'',who:'',busy:false,site:'',timer:null};
+const isAcc=v=>/^[0-9a-f]{24}$/i.test(v)||/^\d+:[0-9a-f-]{16,}$/i.test(v);
+function jiraAcc(m){const v=String(m.jira||'').trim();if(!v)return null;if(isAcc(v))return v;if(m.jiraId&&m.jiraSrc===v)return m.jiraId;return null}
+function jiraJql(){
+  if(String(JC.jql||'').trim())return String(JC.jql).trim();
+  const ids=S.members.map(jiraAcc).filter(Boolean);
+  if(!ids.length)return null;
+  const list=ids.map(i=>'"'+i+'"').join(',');
+  const days=Math.max(1,Math.min(180,Number(JC.days)||14));
+  const proj=String(JC.project||'').split(/[,\s]+/).filter(Boolean).map(p=>'"'+p.replace(/"/g,'')+'"');
+  return `(creator in (${list}) OR reporter in (${list}) OR assignee in (${list})) AND updated >= -${days}d${proj.length?` AND project in (${proj.join(',')})`:''} ORDER BY updated DESC`;
+}
+function jiraEnsure(force){
+  if(dbState!=='on'||!JC._loaded)return;
+  const q=jiraJql();
+  if(!q){clearInterval(J.timer);J.key='';J.state='nopeople';render();return}
+  if(q===J.key&&!force)return;
+  J.key=q;clearInterval(J.timer);
+  if(J.state!=='ok')J.state='loading';render();
+  jiraFetch();
+  J.timer=setInterval(()=>{if(!document.hidden)jiraFetch()},300000);
+}
+async function jiraFetch(){
+  if(!J.key)return;J.busy=true;render();
+  try{const j=await api('jiraSearch',{jql:J.key,max:50});
+    J.site=j.site||'';J.issues=(j.issues||[]).map(normIssue);J.state='ok';J.err=null;J.at=Date.now()}
+  catch(e){if(J.state==='ok'&&e.code!=='jira_config'&&e.code!=='jira_http'){J.err=e}else{J.state='error';J.err=e}}
+  J.busy=false;render();
+}
+function normIssue(x){
+  const f=x.fields||x;const nm=u=>u?(typeof u==='string'?u:u.displayName||u.name||''):'';const id=u=>u&&typeof u==='object'?u.accountId||'':'';
+  return {key:x.key,summary:f.summary||'',status:nm(f.status),cat:(f.status&&f.status.statusCategory&&f.status.statusCategory.key)||'',type:nm(f.issuetype),pri:nm(f.priority),
+    assignee:nm(f.assignee),assigneeId:id(f.assignee),reporter:nm(f.reporter)||nm(f.creator),reporterId:id(f.reporter)||id(f.creator),updated:f.updated||''};
+}
+function memberByAcc(acc){return acc?S.members.find(m=>jiraAcc(m)===acc)||null:null}
+function ago(iso){const t=Date.parse(iso);if(!t)return '';const m=Math.round((Date.now()-t)/60000);if(m<1)return '방금';if(m<60)return m+'분 전';const h=Math.round(m/60);if(h<24)return h+'시간 전';return Math.round(h/24)+'일 전'}
+function hhmm(ms){const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function jiraErrHtml(err){
+  const c=err&&err.code,msg=esc(err&&err.message||'');
+  if(c==='jira_config')return `<div class="jmsg"><b>Jira 연결 정보가 없습니다</b><span>Apps Script의 스크립트 속성에 JIRA_SITE, JIRA_EMAIL, JIRA_TOKEN을 넣어 주세요. (배포 가이드 4단계)</span></div>`;
+  if(c==='jira_http')return `<div class="jmsg"><b>Jira가 요청을 거절했습니다</b><span>API 토큰, 프로젝트 키, 직접 입력한 JQL을 확인해 주세요. 응답: ${msg}</span><button class="btn sm" data-act="jRefresh">다시 시도</button></div>`;
+  return `<div class="jmsg"><b>Jira를 불러오지 못했습니다</b><span>${msg||'네트워크 상태를 확인해 주세요.'}</span><button class="btn sm" data-act="jRefresh">다시 시도</button></div>`;
+}
+function vJira(){
+  let body='',stamp='';
+  if(dbState!=='on')body=`<div class="jmsg">서버에 연결되면 Jira 활동이 표시됩니다.</div>`;
+  else if(J.state==='init'||J.state==='loading')body=`<div class="jmsg">Jira에서 불러오는 중…</div>`;
+  else if(J.state==='nopeople')body=`<div class="jmsg"><b>Jira 계정이 확인된 인원이 없습니다</b><span>기준정보 → 인원에 Jira 이메일을 넣고, Jira 연동의 [계정 확인]을 눌러 주세요.</span><button class="btn sm pri" data-tab="admin">인원 설정</button></div>`;
+  else if(J.state==='error')body=jiraErrHtml(J.err);
+  else{
+    const ms=S.members.filter(jiraAcc),sel=J.who;
+    const list=J.issues.filter(i=>!sel||i.assigneeId===sel||i.reporterId===sel);
+    const base=(J.site||'').replace(/\/+$/,'');
+    stamp=`<span class="jstamp">${J.at?hhmm(J.at)+' 갱신':''} · 5분마다 자동</span>`;
+    body=`<div class="chips"><button class="chip ${!sel?'on':''}" data-act="jWho" data-v="">전체 ${J.issues.length}</button>${ms.map(m=>{const a=jiraAcc(m),n=J.issues.filter(i=>i.assigneeId===a||i.reporterId===a).length;return `<button class="chip ${sel===a?'on':''}" data-act="jWho" data-v="${esc(a)}">${esc(m.name)} ${n}</button>`}).join('')}</div>`;
+    body+=list.length?`<div class="body" style="padding-block:4px">${list.map(i=>{
+      const st=i.cat==='done'?'ok':i.cat==='indeterminate'?'acc':'';const rp=memberByAcc(i.reporterId),as=memberByAcc(i.assigneeId);
+      return `<div class="jr">${base?`<a class="k" href="${esc(base)}/browse/${encodeURIComponent(i.key)}" target="_blank" rel="noopener">${esc(i.key)}</a>`:`<span class="k">${esc(i.key)}</span>`}<span class="s" title="${esc(i.summary)}">${esc(i.summary)}</span><span class="pill ${st}">${esc(i.status)}</span>
+      <div class="w"><span>${esc(i.type)}${i.pri?' · '+esc(i.pri):''}</span><span>작성 ${esc(rp?rp.name:i.reporter||'–')}</span><span>담당 ${esc(as?as.name:i.assignee||'미지정')}</span><span>${esc(ago(i.updated))} 수정</span></div></div>`}).join('')}</div>`
+      :`<div class="jmsg">최근 ${Number(JC.days)||14}일 동안 해당 인원의 Jira 활동이 없습니다.</div>`;
+    if(J.err)body=`<div class="banner" style="margin:10px 14px 0">최근 갱신에 실패해 이전 결과를 보여 주고 있습니다.</div>`+body;
+  }
+  return `<div class="panel"><h2>Jira 최근 활동 ${stamp}<span class="sp"></span>${J.key?`<button class="btn sm" data-act="jRefresh" ${J.busy?'disabled':''}>${J.busy?'불러오는 중…':'새로 고침'}</button>`:''}<button class="btn sm" data-tab="admin">설정</button></h2>${body}</div>`;
+}
+function vJiraAdmin(){
+  const c=JC,need=S.members.filter(m=>m.jira&&!jiraAcc(m)).length;
+  return `<div class="panel"><h2>Jira 연동<span class="sp"></span><span class="muted" style="font-weight:400;font-size:12px">홈 화면의 Jira 최근 활동에 쓰입니다</span></h2><div class="body">
+  <div class="modal" style="width:auto;box-shadow:none;border:0"><form id="jform" style="padding:0">
+    <div class="fld"><label for="j_proj">프로젝트 키 (선택, 쉼표 구분)</label><input id="j_proj" type="text" placeholder="예: CXLGES, BU2" value="${esc(c.project||'')}"></div>
+    <div class="fld"><label for="j_days">조회 기간 (일)</label><input id="j_days" type="number" min="1" max="180" value="${esc(c.days||14)}"></div>
+    <div class="fld full"><label for="j_jql">JQL 직접 입력 (선택 · 입력하면 위 인원/프로젝트 조건 대신 사용)</label><textarea id="j_jql" placeholder="예: project = CXLGES AND updated >= -7d ORDER BY updated DESC">${esc(c.jql||'')}</textarea></div>
+    <div class="mact"><button type="button" class="btn" data-act="jLookup">계정 확인${need?` (${need}명)`:''}</button><span class="sp"></span><button type="button" class="btn pri" data-act="jSave">저장</button></div>
+  </form></div>
+  <div class="muted" style="font-size:12px;margin-top:8px">인원별 Jira 이메일은 위 인원 목록에서 각 인원을 눌러 입력합니다. 이메일로 넣은 인원은 [계정 확인]을 한 번 눌러야 조회에 포함됩니다. Jira 조회는 Apps Script에 등록한 Jira 계정 권한으로 실행됩니다.</div>
+  </div></div>`;
+}
+async function jiraAct(a,d,el){
+  if(a==='jWho'){J.who=d.v||'';render();return}
+  if(a==='jRefresh'){if(!J.key)jiraEnsure(true);else jiraFetch();return}
+  if(a==='jSave'){const v=id=>($('#'+id)||{}).value||'';
+    if(await saveConfig({project:v('j_proj').trim(),days:Number(v('j_days'))||14,jql:v('j_jql').trim(),updated:new Date().toISOString()}))toast('Jira 연동 설정을 저장했습니다');return}
+  if(a==='jLookup'){
+    const todo=S.members.filter(m=>m.jira&&!jiraAcc(m));if(!todo.length){toast('확인할 계정이 없습니다');return}
+    el.disabled=true;let ok=0,miss=[];
+    for(const m of todo){
+      el.textContent=`확인 중 ${ok+miss.length+1}/${todo.length}`;
+      try{const j=await api('jiraUser',{query:m.jira});const us=j.users||[];
+        const u=us.find(x=>String(x.emailAddress||'').toLowerCase()===m.jira.toLowerCase())||(us.length===1?us[0]:null);
+        if(u){const o=strip(m);o.jiraId=u.accountId;o.jiraSrc=m.jira;o.jiraName=u.displayName||'';if(await save('members',m.id,o))ok++;else miss.push(m.name)}else miss.push(m.name)}
+      catch(e){if(e.code==='jira_config'){toast('Apps Script에 Jira 연결 정보를 먼저 넣어 주세요');break}miss.push(m.name)}
+    }
+    toast(`${ok}명 확인${miss.length?' · 찾지 못함: '+miss.join(', '):''}`);
+    if(el.isConnected){el.disabled=false;el.textContent='계정 확인'}return}
+}
+function exportCsv(name,head,rows){
+  const c=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+  const csv='﻿'+[head,...rows].map(r=>r.map(c).join(',')).join('\r\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=`${name}_${fd(today())}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+render();
+initDb();
+
+})();
+</script>
+</body>
+</html>

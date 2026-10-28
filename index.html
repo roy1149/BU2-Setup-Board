@@ -291,7 +291,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
+const DEFAULT_API_URL='';
 const COLS=['sites','members','equips','schedules','troubles'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
@@ -316,6 +316,9 @@ async function load(){
     if(dbState!=='on'){dbState='off';render()}else toast('서버와 동기화하지 못했습니다. 잠시 후 다시 시도합니다');
   }
 }
+const GAS_RE=/^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[A-Za-z0-9_-]+\/exec$/;
+// 다른 기기 연결 링크: ...?server=<웹앱URL>&key=<팀키> 로 열면 자동 저장 후 주소에서 지움
+(function(){try{const q=new URLSearchParams(location.search),sv=q.get('server');if(sv&&GAS_RE.test(sv)){lsSet('bu2api',sv);if(q.get('key')!=null)lsSet('bu2key',q.get('key'));history.replaceState(null,'',location.pathname+location.hash);setTimeout(()=>toast('서버 연결 정보를 저장했습니다'),800)}}catch(e){}})();
 async function initDb(){
   API_URL=lsGet('bu2api')||DEFAULT_API_URL;API_KEY=lsGet('bu2key');
   if(!API_URL){dbState='nourl';render();return}
@@ -367,7 +370,7 @@ function drawWiz(){
 }
 async function wizTest(){
   const url=$('#s_url').value.trim(),key=$('#s_key').value.trim(),out=$('#wRes');
-  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)){out.innerHTML='<span class="pill bad">확인 필요</span> 주소가 https://script.google.com/macros/s/…/exec 형태인지 확인해 주세요. (끝이 /dev 이면 배포 URL이 아닙니다)';return false}
+  if(!GAS_RE.test(url)){out.innerHTML='<span class="pill bad">확인 필요</span> '+(/github\.(com|io)/.test(url)?'GitHub 주소가 들어 있습니다. 여기에는 <b>Apps Script 웹 앱 URL</b>(https://script.google.com/macros/s/…/exec)을 넣어야 합니다. PC에서 연결되어 있다면 PC 화면 왼쪽 아래 <b>휴대폰 연결</b> 버튼의 QR을 찍으면 자동으로 연결됩니다.':/\/dev$/.test(url)?'끝이 /dev 인 테스트 주소입니다. 배포 관리에서 /exec 로 끝나는 웹 앱 URL을 복사하세요.':'주소가 https://script.google.com/macros/s/…/exec 형태인지 확인해 주세요.');return false}
   out.innerHTML='<span class="muted">연결 확인 중…</span>';
   try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'load',key})});const j=await r.json();
     if(j.ok){out.innerHTML='<span class="pill ok">연결 성공</span> 저장하고 연결을 눌러 주세요.';return true}
@@ -391,8 +394,8 @@ function navHtml(){
   return TABS.map(t=>`<button class="tab${t.k===tab?' on':''}" data-tab="${t.k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg>${t.l}${t.k==='trouble'&&open?`<span class="n">${open}</span>`:''}</button>`).join('');
 }
 function renderNav(){
-  $('#rail').innerHTML=`<div class="brand" style="flex-direction:row;align-items:center;gap:10px"><span class="logo">BU2</span><span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><b>BU2 셋업 보드</b><span>기술운영1그룹</span></span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${installBtn()}<button class="btn sm" data-act="server">서버 설정</button><button class="btn sm" data-act="theme" title="밝게/어둡게 전환">${document.documentElement.getAttribute('data-theme')==='light'?'어둡게':'밝게'}</button></span></div>`;
-  $('#mobnav').innerHTML=navHtml();
+  $('#rail').innerHTML=`<div class="brand" style="flex-direction:row;align-items:center;gap:10px"><span class="logo">BU2</span><span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><b>BU2 셋업 보드</b><span>기술운영1그룹</span></span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${installBtn()}${dbState==='on'?'<button class="btn sm" data-act="phone" title="QR로 휴대폰·다른 PC 연결">휴대폰 연결</button>':''}<button class="btn sm" data-act="server">서버 설정</button><button class="btn sm" data-act="theme" title="밝게/어둡게 전환">${document.documentElement.getAttribute('data-theme')==='light'?'어둡게':'밝게'}</button></span></div>`;
+  $('#mobnav').innerHTML=navHtml()+installBtn()+(dbState==='on'?'':'<button class="btn sm" data-act="server">서버 설정</button>');
 }
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab]');
@@ -649,7 +652,7 @@ function openModal(title,fields,data,col,extraHtml){
 function closeModal(){$('#modalRoot').innerHTML='';modalCtx=null}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalCtx)closeModal()});
 document.addEventListener('submit',async e=>{
-  if(e.target.id==='instForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
+  if(e.target.id==='instForm'||e.target.id==='phoneForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
   if(e.target.id!=='mform')return;e.preventDefault();
   const fd_=new FormData(e.target),o=Object.assign({},strip(modalCtx.data));
   for(const f of modalCtx.fields){let v=fd_.get(f.k);if(f.t==='number')v=v===''?null:Number(v);o[f.k]=v==null?'':v}
@@ -724,6 +727,8 @@ async function act(a,d,ev,el){
     case 'csvTr':exportCsv('트러블리스트',['출처','No','Jira','등록일','상태','우선순위','사이트/프로젝트','설비','구분','제목','현상/설명','원인','조치','담당','완료일'],trFiltered().map(r=>r.src==='board'?['보드',r.no,r.key,r.date,r.status,r.pri,r.where,r.sub2,r.cat,r.title,r.raw.symptom,r.raw.cause,r.raw.action,r.owner,r.closed]:['Jira','',r.key,r.date,r.status,r.pri,r.where,'',r.cat,r.title,r.raw.desc,'','',r.owner,r.closed]));break;
     case 'server':openServer();break;
     case 'install':doInstall();break;
+    case 'phone':openPhone();break;
+    case 'copyLink':copyLink();break;
     case 'theme':{const r=document.documentElement,l=r.getAttribute('data-theme')!=='light';if(l)r.setAttribute('data-theme','light');else r.removeAttribute('data-theme');try{localStorage.setItem('bu2theme',l?'light':'dark')}catch(_){}render();break}
     case 'wNext':case 'wPrev':case 'wGo':case 'wTest':case 'wCopy':wizAct(a,d);break;
     case 'btEdit':btEditOpen(d.id);break;
@@ -1280,6 +1285,23 @@ async function doInstall(){
   if(installEvt){installEvt.prompt();try{const c=await installEvt.userChoice;if(c&&c.outcome==='accepted')installEvt=null}catch(e){}renderNav();return}
   installHelp();
 }
+
+// ---------- 휴대폰·다른 PC 연결 (QR) ----------
+function connectLink(){const u=new URL(location.href);u.search='';u.hash='';u.searchParams.set('server',API_URL);if(API_KEY)u.searchParams.set('key',API_KEY);return u.toString()}
+function openPhone(){
+  if(dbState!=='on'){toast('먼저 이 PC에서 서버 연결을 마쳐 주세요');return}
+  const link=connectLink();
+  modalCtx={col:'__phone',data:{},fields:[]};
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true" aria-label="휴대폰 연결"><h3>휴대폰·다른 PC 연결</h3><form id="phoneForm"><div class="wbody">
+   <ol><li>휴대폰 카메라로 아래 QR을 찍어 링크를 엽니다. 또는 링크를 복사해 카톡·메일로 보내 엽니다.</li><li>열리면 서버 연결이 자동으로 저장됩니다.</li><li>그다음 화면 왼쪽 아래(휴대폰은 메뉴) <b>앱 설치</b> 또는 브라우저 메뉴의 <b>홈 화면에 추가</b>를 누릅니다.</li></ol>
+   <div style="display:flex;justify-content:center;padding:8px"><div id="qrBox" style="background:#fff;padding:12px;border-radius:8px;min-width:200px;min-height:200px;display:grid;place-items:center;color:#333;font-size:12px">QR 만드는 중…</div></div>
+   <div style="display:flex;gap:6px"><input id="phoneLink" type="text" readonly value="${esc(link)}" style="flex:1;font-family:var(--mono);font-size:11px"><button type="button" class="btn sm" data-act="copyLink">복사</button></div>
+   <div class="muted" style="font-size:12px">이 링크에는 서버 주소${API_KEY?'와 팀 접속 키':''}가 들어 있습니다. 팀원에게만 보내 주세요.</div>
+  </div><div class="mact"><span class="sp"></span><button type="button" class="btn pri" data-act="close">닫기</button></div></form></div></div>`;
+  const draw=()=>{const box=$('#qrBox');if(!box)return;box.innerHTML='';try{new QRCode(box,{text:link,width:200,height:200,correctLevel:QRCode.CorrectLevel.L})}catch(e){box.textContent='QR을 만들지 못했습니다. 아래 링크를 복사해 보내 주세요.'}};
+  if(window.QRCode)draw();else{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';sc.onload=draw;sc.onerror=()=>{const b=$('#qrBox');if(b)b.textContent='QR을 불러오지 못했습니다. 아래 링크를 복사해 보내 주세요.'};document.head.appendChild(sc)}
+}
+async function copyLink(){const i=$('#phoneLink');try{await navigator.clipboard.writeText(i.value);toast('링크를 복사했습니다')}catch(e){i.focus();i.select();try{document.execCommand('copy');toast('링크를 복사했습니다')}catch(_){toast('Ctrl+C로 복사하세요')}}}
 
 render();
 initDb();

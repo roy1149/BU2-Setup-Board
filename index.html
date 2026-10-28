@@ -291,7 +291,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='';
+const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
 const COLS=['sites','members','equips','schedules','troubles'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}

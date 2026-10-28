@@ -4,34 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>BU2 셋업 보드</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233b3fa8'/%3E%3Crect x='10' y='40' width='44' height='6' rx='3' fill='%23ffffff' opacity='.35'/%3E%3Crect x='10' y='40' width='28' height='6' rx='3' fill='%23ffd166'/%3E%3Ctext x='32' y='33' text-anchor='middle' font-family='Arial,Helvetica,sans-serif' font-size='22' font-weight='700' fill='%23ffffff'%3EBU2%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#1a1d29">
+<script>try{var t=localStorage.getItem('bu2theme');if(t==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: fixed left rail (tabs) + work surface; timelines scroll inside their own frame */
 :root{
+  /* 기본: 어두운 남색 테마 (BU2 일정 관리와 같은 톤) */
+  --bg:#1a1d29; --surface:#22263a; --sunk:#2a2f45; --line:#33394f; --line-soft:#2b3044;
+  --fg:#e6e8ef; --muted:#9aa0b4; --faint:#6c7288;
+  --accent:#5b8def; --accent-soft:#263457; --accent-fg:#0f1320;
+  --ok:#4cc48a; --ok-soft:#1b3a2c; --warn:#e7a03c; --warn-soft:#3d3018; --bad:#f06b6b; --bad-soft:#43222a;
+  --c1:#5b8def; --c2:#4cc48a; --c3:#e7a03c; --c4:#a98bf0; --c5:#7f879c; --c6:#3fc1c9;
+  --rail:#1e2130;
+  --font:"IBM Plex Sans KR",-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:6px;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
   --bg:#f3f5f8; --surface:#ffffff; --sunk:#eaeef3; --line:#d6dce5; --line-soft:#e6eaf0;
   --fg:#18202b; --muted:#5d6878; --faint:#8a94a3;
   --accent:#2350b8; --accent-soft:#e3eafb; --accent-fg:#ffffff;
   --ok:#1f8a55; --ok-soft:#dff3e8; --warn:#b86e00; --warn-soft:#fbefd9; --bad:#c23434; --bad-soft:#f9e1e1;
   --c1:#2350b8; --c2:#1f8a55; --c3:#b86e00; --c4:#7b45b8; --c5:#7a8597; --c6:#0e8a91;
-  --font:"IBM Plex Sans KR",-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
-  --r:6px;
+  --rail:#ffffff;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#11161d; --surface:#18202a; --sunk:#1e2833; --line:#2c3846; --line-soft:#232e3a;
-  --fg:#e6ebf2; --muted:#9aa6b6; --faint:#6f7b8b;
-  --accent:#6f97f2; --accent-soft:#1e2c4a; --accent-fg:#0d1420;
-  --ok:#4cc48a; --ok-soft:#173326; --warn:#e3a33f; --warn-soft:#3a2c14; --bad:#f07070; --bad-soft:#3d1c1e;
-  --c1:#6f97f2; --c2:#4cc48a; --c3:#e3a33f; --c4:#b48cf0; --c5:#8a96a8; --c6:#45c2c8;
-  color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#11161d; --surface:#18202a; --sunk:#1e2833; --line:#2c3846; --line-soft:#232e3a;
-  --fg:#e6ebf2; --muted:#9aa6b6; --faint:#6f7b8b;
-  --accent:#6f97f2; --accent-soft:#1e2c4a; --accent-fg:#0d1420;
-  --ok:#4cc48a; --ok-soft:#173326; --warn:#e3a33f; --warn-soft:#3a2c14; --bad:#f07070; --bad-soft:#3d1c1e;
-  --c1:#6f97f2; --c2:#4cc48a; --c3:#e3a33f; --c4:#b48cf0; --c5:#8a96a8; --c6:#45c2c8;
-  color-scheme:dark}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0}
@@ -40,9 +41,10 @@ body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
 .app{display:grid;grid-template-columns:208px 1fr;min-height:100%}
-.rail{background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.rail{background:var(--rail);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
 .brand{padding:4px 10px 16px;display:flex;flex-direction:column;gap:2px}
-.brand b{font-size:16px;letter-spacing:-.01em}
+.brand b{font-size:16px;letter-spacing:-.01em;white-space:nowrap}
+.logo{width:34px;height:34px;border-radius:9px;background:#3b3fa8;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;box-shadow:inset 0 -5px 0 #ffd166}
 .brand span{font-size:11px;color:var(--muted);letter-spacing:.04em}
 .tab{display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--muted);font-weight:500}
 .tab:hover{background:var(--sunk);color:var(--fg)}
@@ -284,7 +286,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
+const DEFAULT_API_URL='';
 const COLS=['sites','members','equips','schedules','troubles'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
@@ -384,7 +386,7 @@ function navHtml(){
   return TABS.map(t=>`<button class="tab${t.k===tab?' on':''}" data-tab="${t.k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg>${t.l}${t.k==='trouble'&&open?`<span class="n">${open}</span>`:''}</button>`).join('');
 }
 function renderNav(){
-  $('#rail').innerHTML=`<div class="brand"><b>BU2 셋업 보드</b><span>기술운영4그룹</span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><button class="btn sm" data-act="server">서버 설정</button></div>`;
+  $('#rail').innerHTML=`<div class="brand" style="flex-direction:row;align-items:center;gap:10px"><span class="logo">BU2</span><span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><b>BU2 셋업 보드</b><span>기술운영1그룹</span></span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><span style="display:flex;gap:6px"><button class="btn sm" data-act="server">서버 설정</button><button class="btn sm" data-act="theme" title="밝게/어둡게 전환">${document.documentElement.getAttribute('data-theme')==='light'?'어둡게':'밝게'}</button></span></div>`;
   $('#mobnav').innerHTML=navHtml();
 }
 document.addEventListener('click',e=>{
@@ -716,6 +718,7 @@ async function act(a,d,ev,el){
       const {col,id}=modalCtx;closeModal();await del(col,id);break}
     case 'csvTr':exportCsv('트러블리스트',['출처','No','Jira','등록일','상태','우선순위','사이트/프로젝트','설비','구분','제목','현상/설명','원인','조치','담당','완료일'],trFiltered().map(r=>r.src==='board'?['보드',r.no,r.key,r.date,r.status,r.pri,r.where,r.sub2,r.cat,r.title,r.raw.symptom,r.raw.cause,r.raw.action,r.owner,r.closed]:['Jira','',r.key,r.date,r.status,r.pri,r.where,'',r.cat,r.title,r.raw.desc,'','',r.owner,r.closed]));break;
     case 'server':openServer();break;
+    case 'theme':{const r=document.documentElement,l=r.getAttribute('data-theme')!=='light';if(l)r.setAttribute('data-theme','light');else r.removeAttribute('data-theme');try{localStorage.setItem('bu2theme',l?'light':'dark')}catch(_){}render();break}
     case 'wNext':case 'wPrev':case 'wGo':case 'wTest':case 'wCopy':wizAct(a,d);break;
     case 'btEdit':btEditOpen(d.id);break;
     case 'btRefresh':case 'pJira':case 'pBtOnly':case 'jOpenIssue':case 'btFields':case 'btSave':btAct(a,d,el);break;

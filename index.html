@@ -6,6 +6,11 @@
 <title>BU2 셋업 보드</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233b3fa8'/%3E%3Crect x='10' y='40' width='44' height='6' rx='3' fill='%23ffffff' opacity='.35'/%3E%3Crect x='10' y='40' width='28' height='6' rx='3' fill='%23ffd166'/%3E%3Ctext x='32' y='33' text-anchor='middle' font-family='Arial,Helvetica,sans-serif' font-size='22' font-weight='700' fill='%23ffffff'%3EBU2%3C/text%3E%3C/svg%3E">
 <meta name="theme-color" content="#1a1d29">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BU2 셋업">
 <script>try{var t=localStorage.getItem('bu2theme');if(t==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -286,7 +291,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
+const DEFAULT_API_URL='';
 const COLS=['sites','members','equips','schedules','troubles'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
@@ -386,7 +391,7 @@ function navHtml(){
   return TABS.map(t=>`<button class="tab${t.k===tab?' on':''}" data-tab="${t.k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${t.i}</svg>${t.l}${t.k==='trouble'&&open?`<span class="n">${open}</span>`:''}</button>`).join('');
 }
 function renderNav(){
-  $('#rail').innerHTML=`<div class="brand" style="flex-direction:row;align-items:center;gap:10px"><span class="logo">BU2</span><span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><b>BU2 셋업 보드</b><span>기술운영1그룹</span></span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><span style="display:flex;gap:6px"><button class="btn sm" data-act="server">서버 설정</button><button class="btn sm" data-act="theme" title="밝게/어둡게 전환">${document.documentElement.getAttribute('data-theme')==='light'?'어둡게':'밝게'}</button></span></div>`;
+  $('#rail').innerHTML=`<div class="brand" style="flex-direction:row;align-items:center;gap:10px"><span class="logo">BU2</span><span style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0"><b>BU2 셋업 보드</b><span>기술운영1그룹</span></span></div>`+navHtml()+`<div class="foot" style="display:flex;flex-direction:column;gap:6px;align-items:flex-start"><span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dbState==='on'?'var(--ok)':dbState==='wait'?'var(--warn)':'var(--bad)'};margin-right:6px"></span>${dbState==='on'?'서버 연결 정상 · 30초마다 동기화':dbState==='wait'?'서버 연결 중…':'서버 미연결'}</span><span style="display:flex;gap:6px;flex-wrap:wrap">${installBtn()}<button class="btn sm" data-act="server">서버 설정</button><button class="btn sm" data-act="theme" title="밝게/어둡게 전환">${document.documentElement.getAttribute('data-theme')==='light'?'어둡게':'밝게'}</button></span></div>`;
   $('#mobnav').innerHTML=navHtml();
 }
 document.addEventListener('click',e=>{
@@ -644,7 +649,7 @@ function openModal(title,fields,data,col,extraHtml){
 function closeModal(){$('#modalRoot').innerHTML='';modalCtx=null}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalCtx)closeModal()});
 document.addEventListener('submit',async e=>{
-  if(e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
+  if(e.target.id==='instForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
   if(e.target.id!=='mform')return;e.preventDefault();
   const fd_=new FormData(e.target),o=Object.assign({},strip(modalCtx.data));
   for(const f of modalCtx.fields){let v=fd_.get(f.k);if(f.t==='number')v=v===''?null:Number(v);o[f.k]=v==null?'':v}
@@ -718,6 +723,7 @@ async function act(a,d,ev,el){
       const {col,id}=modalCtx;closeModal();await del(col,id);break}
     case 'csvTr':exportCsv('트러블리스트',['출처','No','Jira','등록일','상태','우선순위','사이트/프로젝트','설비','구분','제목','현상/설명','원인','조치','담당','완료일'],trFiltered().map(r=>r.src==='board'?['보드',r.no,r.key,r.date,r.status,r.pri,r.where,r.sub2,r.cat,r.title,r.raw.symptom,r.raw.cause,r.raw.action,r.owner,r.closed]:['Jira','',r.key,r.date,r.status,r.pri,r.where,'',r.cat,r.title,r.raw.desc,'','',r.owner,r.closed]));break;
     case 'server':openServer();break;
+    case 'install':doInstall();break;
     case 'theme':{const r=document.documentElement,l=r.getAttribute('data-theme')!=='light';if(l)r.setAttribute('data-theme','light');else r.removeAttribute('data-theme');try{localStorage.setItem('bu2theme',l?'light':'dark')}catch(_){}render();break}
     case 'wNext':case 'wPrev':case 'wGo':case 'wTest':case 'wCopy':wizAct(a,d);break;
     case 'btEdit':btEditOpen(d.id);break;
@@ -1251,6 +1257,28 @@ function vTrouble(){
     const stCls=r.src==='board'?(r.status==='완료'?'ok':r.status==='진행'?'acc':r.status==='모니터링'?'warn':'bad'):(r.raw.cat==='done'?'ok':r.raw.cat==='indeterminate'?'acc':'bad');
     return `<tr class="click" data-act="${r.src==='board'?'editTr':'tjOpen'}" data-id="${esc(r.id)}"><td>${keyHtml}</td><td class="mono">${esc(r.date)}</td><td><span class="pill ${r.priCls}">${esc(r.pri)}</span></td><td><span class="pill ${stCls}">${esc(r.status)}</span></td><td>${esc(r.where)}${r.sub2?`<div class="muted" style="font-size:12px">${esc(r.sub2)}</div>`:''}</td><td>${esc(r.cat)}</td><td style="min-width:240px"><b>${esc(r.title)}</b>${r.note?`<div class="muted" style="font-size:12px">${esc(String(r.note).slice(0,70))}${String(r.note).length>70?'…':''}</div>`:''}</td><td>${esc(r.owner)}</td><td class="num">${r.age!==''?r.age+'일':''}</td><td class="mono">${esc(r.closed)}</td></tr>`}).join('')}</tbody></table>`:emptyBox('조건에 맞는 트러블이 없습니다','필터를 바꾸거나 [보드/Jira] 구분을 확인해 보세요.','')}</div></div>`;
   return h;
+}
+
+// ---------- 앱 설치 ----------
+let installEvt=null;
+const isStandalone=()=>window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;renderNav()});
+window.addEventListener('appinstalled',()=>{installEvt=null;toast('앱으로 설치했습니다. 바탕화면·시작 메뉴에서 열 수 있습니다');renderNav()});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',()=>{navigator.serviceWorker.register('service-worker.js').catch(()=>{})})}
+function installBtn(){if(isStandalone())return '';return `<button class="btn sm pri" data-act="install" title="이 보드를 PC·휴대폰에 앱으로 설치">앱 설치</button>`}
+function installHelp(){
+  const ua=navigator.userAgent,ios=/iPhone|iPad|iPod/.test(ua),edge=/Edg\//.test(ua);
+  modalCtx={col:'__inst',data:{},fields:[]};
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true" aria-label="앱 설치"><h3>앱으로 설치하기</h3><form id="instForm"><div class="wbody">
+  ${ios?`<ol><li>Safari 아래쪽 <b>공유</b> 버튼(네모에 위쪽 화살표)을 누릅니다.</li><li><b>홈 화면에 추가</b>를 누릅니다.</li><li>오른쪽 위 <b>추가</b>를 누르면 홈 화면에 BU2 아이콘이 생깁니다.</li></ol>`
+  :edge?`<ol><li>주소창 오른쪽 <b>앱 설치</b> 아이콘(작은 네모 세 개와 +)을 누릅니다.<br><span class="muted">안 보이면 오른쪽 위 <b>…</b> → <b>앱</b> → <b>이 사이트를 앱으로 설치</b></span></li><li><b>설치</b>를 누릅니다.</li><li>작업 표시줄·시작 메뉴에 고정할지 물으면 원하는 항목을 체크합니다.</li></ol>`
+  :`<ol><li>주소창 오른쪽 <b>설치</b> 아이콘(모니터에 아래 화살표)을 누릅니다.<br><span class="muted">안 보이면 오른쪽 위 <b>⋮</b> → <b>전송, 저장, 공유</b> → <b>페이지를 앱으로 설치</b></span></li><li><b>설치</b>를 누릅니다.</li></ol>`}
+  <div class="muted" style="font-size:12px">휴대폰(안드로이드)은 Chrome 메뉴 ⋮ → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 됩니다.</div>
+  </div><div class="mact"><span class="sp"></span><button type="button" class="btn pri" data-act="close">확인</button></div></form></div></div>`;
+}
+async function doInstall(){
+  if(installEvt){installEvt.prompt();try{const c=await installEvt.userChoice;if(c&&c.outcome==='accepted')installEvt=null}catch(e){}renderNav();return}
+  installHelp();
 }
 
 render();

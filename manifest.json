@@ -1,0 +1,16 @@
+{
+  "name": "BU2 셋업 보드",
+  "short_name": "BU2 셋업",
+  "description": "BU2 기술운영1그룹 설비 셋업·인원 스케쥴·트러블 관리",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a1d29",
+  "theme_color": "#1a1d29",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

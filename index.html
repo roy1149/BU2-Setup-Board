@@ -292,7 +292,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
+const DEFAULT_API_URL='';
 const COLS=['sites','members','equips','schedules','troubles','purchase','buylist'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
@@ -653,7 +653,7 @@ function openModal(title,fields,data,col,extraHtml){
 function closeModal(){$('#modalRoot').innerHTML='';modalCtx=null}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalCtx)closeModal()});
 document.addEventListener('submit',async e=>{
-  if(e.target.id==='instForm'||e.target.id==='bsFormX'||e.target.id==='buyFormX'||e.target.id==='phoneForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
+  if(e.target.id==='instForm'||e.target.id==='gwForm'||e.target.id==='bsFormX'||e.target.id==='buyFormX'||e.target.id==='phoneForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
   if(e.target.id!=='mform')return;e.preventDefault();
   const fd_=new FormData(e.target),o=Object.assign({},strip(modalCtx.data));
   for(const f of modalCtx.fields){let v=fd_.get(f.k);if(f.t==='number')v=v===''?null:Number(v);o[f.k]=v==null?'':v}
@@ -729,6 +729,7 @@ async function act(a,d,ev,el){
     case 'server':openServer();break;
     case 'install':doInstall();break;
     case 'phone':openPhone();break;
+    case 'gwGuide':gwGuide();break;
     case 'bsPull':case 'bsSetup':case 'bsCreate':bsAct(a,d,el);break;
     case 'buyNew':case 'buyEdit':case 'buyDel':case 'buyCancel':case 'buyCommit':case 'buyView':case 'buyExport':buyAct(a,d,el);break;
     case 'purCancel':case 'purCommit':case 'purProj':case 'purExport':purAct(a,d,el);break;
@@ -1466,7 +1467,7 @@ function vBuyList(){
   const all=buyRows(),f=BU.f,q=f.q.trim().toLowerCase();
   let h='';
   if(BU.pending){const p=BU.pending;h+=`<div class="banner" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>${esc(p.file)}</b> · ${esc(p.sheet)} 시트에서 ${p.rows.length}행(진행 중 ${p.rows.filter(isOngoing).length}행)을 읽었습니다. 올리면 보드의 구매 LIST를 이 내용으로 바꿉니다.</span><span style="flex:1"></span><button class="btn sm" data-act="buyCancel">취소</button><button class="btn sm pri" data-act="buyCommit">올리기</button></div>`}
-  if(!all.length)return h+`<div class="panel">${emptyBox('구매 LIST가 비어 있습니다','"26년 CX 고객지원1팀 4파트 구매 LIST" 엑셀을 [엑셀 올리기]로 올리거나, 구글 시트로 관리한다면 [시트 연결] 후 [구글 시트에서 불러오기]를 누르세요. 회사 밖에서도 됩니다.','')}</div>`;
+  if(!all.length)return h+`<div class="panel">${emptyBox('구매 LIST가 비어 있습니다','"26년 CX 고객지원1팀 4파트 구매 LIST" 엑셀을 [엑셀 올리기]로 올리거나, [전자결재에서 가져오기]로 AS·SP 품의서를 바로 등록하거나, 구글 시트로 관리한다면 [시트 연결] 후 [구글 시트에서 불러오기]를 누르세요. 회사 밖에서도 됩니다.','')}</div>`;
   const ong=all.filter(isOngoing);
   const es=ong.map(buyErp);
   h+=`<div class="kpis" style="grid-template-columns:repeat(5,minmax(0,1fr))">
@@ -1498,10 +1499,11 @@ function vBuyErpGuide(){
   <div class="muted" style="font-size:12px">ERP 화면 구조에 따라 표를 읽지 못하면 창에 안내가 나옵니다. 그때는 ERP 조회 결과를 엑셀로 내려받아 위 [ERP 발주 내역] 탭에서 [엑셀 올리기]로 올려도 같은 결과가 됩니다.</div>
   </div></div></div>`;
 }
-function bookmarkletHref(){
+function bookmarkletHref(file){
+  file=file||'erp-sync.js';
   const site=location.origin+location.pathname.replace(/[^/]*$/,'');
   const cfg=JSON.stringify({api:API_URL||'',key:API_KEY||'',site});
-  return `javascript:(function(){window.__BU2=${cfg};var s=document.createElement('script');s.src='${site}erp-sync.js?'+Date.now();s.onerror=function(){alert('BU2 셋업 보드 스크립트를 불러오지 못했습니다. 인터넷 연결을 확인하세요.')};document.body.appendChild(s)})();`;
+  return `javascript:(function(){window.__BU2=${cfg};var s=document.createElement('script');s.src='${site}${file}?'+Date.now();s.onerror=function(){alert('BU2 셋업 보드 스크립트를 불러오지 못했습니다. 인터넷 연결을 확인하세요.')};document.body.appendChild(s)})();`;
 }
 function buyModal(r){
   r=r||{};const isNew=!r.id;
@@ -1562,7 +1564,7 @@ document.addEventListener('change',async e=>{
 let buT=null;document.addEventListener('input',e=>{if(e.target.id==='buyQ'){clearTimeout(buT);const v=e.target.value;buT=setTimeout(()=>{BU.f.q=v;render();const q=$('#buyQ');if(q){q.focus();q.setSelectionRange(v.length,v.length)}},250)}});
 function vPurchaseAll(){
   const v=BU.view;
-  let h=header('구매발주현황','구매 LIST + ERP 입고 확인',v==='list'?`<button class="btn pri" data-act="bsPull" title="${esc(BS.url?'연결된 시트: '+(BS.title||BS.url):'구글 시트를 먼저 연결합니다')}">구글 시트에서 불러오기</button>${BS.url?`<a class="btn" href="${esc(BS.url)}" target="_blank" rel="noopener">시트 열기 ↗</a>`:''}<button class="btn" data-act="bsSetup">시트 연결</button><button class="btn" data-act="buyExport" ${buyRows().length?'':'disabled'}>엑셀 내보내기</button>${canWrite?'<label class="btn" for="buyFile" style="cursor:pointer">엑셀 올리기</label><input id="buyFile" type="file" accept=".xlsx,.xls" hidden><button class="btn" data-act="buyNew">+ 행 추가</button>':''}`:'');
+  let h=header('구매발주현황','구매 LIST + ERP 입고 확인',v==='list'?`<button class="btn pri" data-act="gwGuide">전자결재에서 가져오기</button><button class="btn" data-act="bsPull" title="${esc(BS.url?'연결된 시트: '+(BS.title||BS.url):'구글 시트를 먼저 연결합니다')}">구글 시트에서 불러오기</button>${BS.url?`<a class="btn" href="${esc(BS.url)}" target="_blank" rel="noopener">시트 열기 ↗</a>`:''}<button class="btn" data-act="bsSetup">시트 연결</button><button class="btn" data-act="buyExport" ${buyRows().length?'':'disabled'}>엑셀 내보내기</button>${canWrite?'<label class="btn" for="buyFile" style="cursor:pointer">엑셀 올리기</label><input id="buyFile" type="file" accept=".xlsx,.xls" hidden><button class="btn" data-act="buyNew">+ 행 추가</button>':''}`:'');
   h+=`<div class="seg" style="align-self:flex-start">${[['list','구매 LIST'],['erp','ERP 발주 내역'],['guide','사내 ERP 확인 방법']].map(([k,l])=>`<button class="${v===k?'on':''}" data-act="buyView" data-v="${k}">${l}</button>`).join('')}</div>`;
   if(v==='list')return h+vBuyList();
   if(v==='guide')return h+vBuyErpGuide();
@@ -1596,6 +1598,22 @@ async function bsAct(a,d,el){
     try{const j=await api('buySheetCreate',{rows:buyRows().map(r=>{const o={};BUY_COLS.forEach(([k])=>o[k]=r[k]||'');return o})});BS={url:j.url,id:j.id,title:j.title};
       await api('save',{col:'config',id:'buySrc',data:{url:j.url,id:j.id,title:j.title,linkedAt:new Date().toISOString()}});closeModal();render();toast('구글 시트를 만들고 연결했습니다');window.open(j.url,'_blank','noopener')}
     catch(e){el.disabled=false;el.textContent='보드 내용으로 새 구글 시트 만들기';toast(e.message||'만들지 못했습니다')}return}
+}
+
+
+function gwGuide(){
+  modalCtx={col:'__gw',data:{},fields:[]};
+  const bm=bookmarkletHref('gw-sync.js');
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal wiz" role="dialog" aria-modal="true" aria-label="전자결재에서 가져오기"><h3>전자결재에서 구매 LIST 가져오기</h3><form id="gwForm"><div class="wbody" style="min-height:0">
+   <ol>
+    <li>처음 한 번: 아래 버튼을 브라우저 <b>즐겨찾기 표시줄로 끌어다 놓습니다.</b> (표시줄이 안 보이면 Ctrl+Shift+B)<br>
+      <a class="btn pri" href="${esc(bm)}" onclick="event.preventDefault();toast('클릭이 아니라 즐겨찾기 표시줄로 끌어다 놓으세요')" style="margin-top:6px">BU2 전자결재 → 구매 LIST</a></li>
+    <li>그룹웨어에 로그인합니다. 회사 밖에서도 됩니다. <a href="https://ngw.intekplus.com/app/approval" target="_blank" rel="noopener">ngw.intekplus.com 전자결재 ↗</a></li>
+    <li>그룹웨어 화면에서 즐겨찾기의 <b>BU2 전자결재 → 구매 LIST</b>를 누릅니다. 기간과 양식(AS(무상)·SP(유상))을 고르고 <b>전자결재 읽기</b>를 누릅니다.</li>
+    <li>목록에서 구매 LIST에 없는 새 건이 미리 체크됩니다. <b>셋업 보드 구매 LIST에 추가</b>를 누르면 이 보드에 바로 등록되고, <b>엑셀로 받기</b>를 누르면 BU2 구매 LIST 양식 엑셀로 내려받습니다.</li>
+   </ol>
+   <div class="muted" style="font-size:12px">가져오는 기준: AS(무상)품의서는 본문 "요청자"가 기준정보 인원인 문서, SP(유상)품의서는 기준정보 인원이 참조·열람자인 문서. 열 대응: 납품처/고객사 ← 판매처, 문서번호 ← 결재 문서번호, 구매 담당자 ← 요청자, 품목 ← 품명, 예정일 ← 입고요청일(유상), 비고 1 ← 프로젝트코드, 비고 2 ← 프로젝트명·내용, 진행 사항 ← 결재 상태·구매요청번호·누적율.</div>
+  </div><div class="mact"><span class="sp"></span><button type="button" class="btn pri" data-act="close">확인</button></div></form></div></div>`;
 }
 
 render();

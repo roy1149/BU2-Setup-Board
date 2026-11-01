@@ -292,7 +292,7 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 
 // ---------- server (Google Apps Script) ----------
 // 배포 후 Apps Script 웹 앱 URL을 여기에 넣으면 팀원 모두 같은 데이터를 봅니다.
-const DEFAULT_API_URL='https://github.com/roy1149/BU2-Setup-Board/edit/main/index.html';
+const DEFAULT_API_URL='';
 const COLS=['sites','members','equips','schedules','troubles','purchase','buylist'];
 let API_URL='',API_KEY='',pollT=null,lastSig='';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
@@ -653,7 +653,7 @@ function openModal(title,fields,data,col,extraHtml){
 function closeModal(){$('#modalRoot').innerHTML='';modalCtx=null}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modalCtx)closeModal()});
 document.addEventListener('submit',async e=>{
-  if(e.target.id==='instForm'||e.target.id==='gwForm'||e.target.id==='bsFormX'||e.target.id==='buyFormX'||e.target.id==='phoneForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
+  if(e.target.id==='instForm'||e.target.id==='bmForm'||e.target.id==='gwForm'||e.target.id==='bsFormX'||e.target.id==='buyFormX'||e.target.id==='phoneForm'||e.target.id==='jform'||e.target.id==='btform'||e.target.id==='trjform'||e.target.id==='tjform'||e.target.id==='tjForm'){e.preventDefault();return}
   if(e.target.id!=='mform')return;e.preventDefault();
   const fd_=new FormData(e.target),o=Object.assign({},strip(modalCtx.data));
   for(const f of modalCtx.fields){let v=fd_.get(f.k);if(f.t==='number')v=v===''?null:Number(v);o[f.k]=v==null?'':v}
@@ -730,6 +730,8 @@ async function act(a,d,ev,el){
     case 'install':doInstall();break;
     case 'phone':openPhone();break;
     case 'gwGuide':gwGuide();break;
+    case 'bmMake':ev.preventDefault();copyBm(d.file,d.name);break;
+    case 'bmCopyAgain':copyBm(d.file,d.name);break;
     case 'bsPull':case 'bsSetup':case 'bsCreate':bsAct(a,d,el);break;
     case 'buyNew':case 'buyEdit':case 'buyDel':case 'buyCancel':case 'buyCommit':case 'buyView':case 'buyExport':buyAct(a,d,el);break;
     case 'purCancel':case 'purCommit':case 'purProj':case 'purExport':purAct(a,d,el);break;
@@ -1491,7 +1493,7 @@ function vBuyErpGuide(){
   return `<div class="panel"><h2>사내에서 ERP 입고일 확인하기<span class="sp"></span><span class="muted" style="font-weight:400;font-size:12px">ERP(10.0.6.103)는 사내망에서만 열리므로 이 단계는 회사에서 합니다</span></h2><div class="body"><div class="wbody" style="min-height:0">
   <ol>
    <li>처음 한 번: 아래 <b>BU2 ERP 입고 확인</b> 버튼을 브라우저 <b>즐겨찾기 표시줄로 끌어다 놓습니다.</b> (즐겨찾기 표시줄이 안 보이면 Ctrl+Shift+B)<br>
-     <a class="btn pri" href="${esc(bm)}" onclick="event.preventDefault();toast('클릭이 아니라 즐겨찾기 표시줄로 끌어다 놓으세요')" style="margin-top:6px">BU2 ERP 입고 확인</a></li>
+     <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center"><a class="btn pri" href="${esc(bm)}" data-act="bmMake" data-file="erp-sync.js" data-name="BU2 ERP 입고 확인">BU2 ERP 입고 확인</a><span class="muted" style="font-size:12px">← 즐겨찾기 표시줄로 <b>끌어다 놓거나</b>, <b>누르면</b> 직접 저장하는 방법이 나옵니다</span></span></li>
    <li>사내망에서 ERP에 로그인하고 <b>구매발주진행현황</b>을 엽니다. 발주일을 올해(예: 2026-01-01 ~ 2026-12-31)로 두고 프로젝트는 비운 채 <b>조회</b>합니다.</li>
    <li>목록이 뜨면 즐겨찾기의 <b>BU2 ERP 입고 확인</b>을 누릅니다. ERP 화면 위에 창이 떠서 구매 LIST의 진행 중 프로젝트코드와 맞는 발주 줄 수를 보여 줍니다.</li>
    <li><b>셋업 보드로 보내기</b>를 누르면 각 행의 ERP 입고 칸(입고 완료, 미입고, 입고일, 남은 납기)이 바로 채워집니다.</li>
@@ -1607,13 +1609,33 @@ function gwGuide(){
   $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal wiz" role="dialog" aria-modal="true" aria-label="전자결재에서 가져오기"><h3>전자결재에서 구매 LIST 가져오기</h3><form id="gwForm"><div class="wbody" style="min-height:0">
    <ol>
     <li>처음 한 번: 아래 버튼을 브라우저 <b>즐겨찾기 표시줄로 끌어다 놓습니다.</b> (표시줄이 안 보이면 Ctrl+Shift+B)<br>
-      <a class="btn pri" href="${esc(bm)}" onclick="event.preventDefault();toast('클릭이 아니라 즐겨찾기 표시줄로 끌어다 놓으세요')" style="margin-top:6px">BU2 전자결재 → 구매 LIST</a></li>
+      <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center"><a class="btn pri" href="${esc(bm)}" data-act="bmMake" data-file="gw-sync.js" data-name="BU2 전자결재 → 구매 LIST">BU2 전자결재 → 구매 LIST</a><span class="muted" style="font-size:12px">← 즐겨찾기 표시줄로 <b>끌어다 놓거나</b>, <b>누르면</b> 직접 저장하는 방법이 나옵니다</span></span></li>
     <li>그룹웨어에 로그인합니다. 회사 밖에서도 됩니다. <a href="https://ngw.intekplus.com/app/approval" target="_blank" rel="noopener">ngw.intekplus.com 전자결재 ↗</a></li>
     <li>그룹웨어 화면에서 즐겨찾기의 <b>BU2 전자결재 → 구매 LIST</b>를 누릅니다. 기간과 양식(AS(무상)·SP(유상))을 고르고 <b>전자결재 읽기</b>를 누릅니다.</li>
     <li>목록에서 구매 LIST에 없는 새 건이 미리 체크됩니다. <b>셋업 보드 구매 LIST에 추가</b>를 누르면 이 보드에 바로 등록되고, <b>엑셀로 받기</b>를 누르면 BU2 구매 LIST 양식 엑셀로 내려받습니다.</li>
    </ol>
    <div class="muted" style="font-size:12px">가져오는 기준: AS(무상)품의서는 본문 "요청자"가 기준정보 인원인 문서, SP(유상)품의서는 기준정보 인원이 참조·열람자인 문서. 열 대응: 납품처/고객사 ← 판매처, 문서번호 ← 결재 문서번호, 구매 담당자 ← 요청자, 품목 ← 품명, 예정일 ← 입고요청일(유상), 비고 1 ← 프로젝트코드, 비고 2 ← 프로젝트명·내용, 진행 사항 ← 결재 상태·구매요청번호·누적율.</div>
   </div><div class="mact"><span class="sp"></span><button type="button" class="btn pri" data-act="close">확인</button></div></form></div></div>`;
+}
+
+
+async function copyBm(file,name){
+  const code=bookmarkletHref(file);
+  let ok=false;try{await navigator.clipboard.writeText(code);ok=true}catch(e){}
+  modalCtx={col:'__bm',data:{},fields:[]};
+  $('#modalRoot').innerHTML=`<div class="scrim" data-act="scrim"><div class="modal wiz" role="dialog" aria-modal="true" aria-label="즐겨찾기 만들기"><h3>즐겨찾기 버튼 만들기 — ${esc(name)}</h3><form id="bmForm"><div class="wbody" style="min-height:0">
+   <div>${ok?'<span class="pill ok">복사됨</span> 버튼 코드를 복사했습니다.':'<span class="pill warn">직접 복사</span> 아래 칸을 눌러 Ctrl+A, Ctrl+C로 복사하세요.'}</div>
+   <textarea id="bmCode" readonly style="font-family:var(--mono);font-size:11px;min-height:70px">${esc(code)}</textarea>
+   <b style="font-size:13px">Edge에서 즐겨찾기로 저장하기</b>
+   <ol>
+    <li><b>Ctrl+Shift+O</b>를 눌러 즐겨찾기 관리 화면을 엽니다. (또는 주소창 오른쪽 ☆ 옆 즐겨찾기 아이콘 → … → 즐겨찾기 관리)</li>
+    <li>위쪽 <b>즐겨찾기 추가</b>를 누릅니다.</li>
+    <li><b>이름</b>: <code>${esc(name)}</code><br><b>URL</b>: 칸을 누르고 <b>Ctrl+V</b> (방금 복사한 코드)</li>
+    <li><b>저장</b>을 누르고, 즐겨찾기 표시줄 폴더에 두면 편합니다. (표시줄 보이기: Ctrl+Shift+B)</li>
+   </ol>
+   <div class="muted" style="font-size:12px">이 버튼은 셋업 보드 화면에서 누르면 아무 일도 하지 않습니다. ${file==='gw-sync.js'?'<b>그룹웨어(ngw.intekplus.com) 전자결재 화면</b>':'<b>사내 ERP 구매발주진행현황 화면</b>'}을 연 상태에서 즐겨찾기를 눌러야 동작합니다. 앱으로 설치한 셋업 보드 창에는 즐겨찾기 표시줄이 없으니 Edge 일반 창에서 사용하세요.</div>
+  </div><div class="mact"><span class="sp"></span><button type="button" class="btn" data-act="bmCopyAgain" data-file="${file}" data-name="${esc(name)}">다시 복사</button><button type="button" class="btn pri" data-act="close">확인</button></div></form></div></div>`;
+  const t=$('#bmCode');if(t)t.addEventListener('focus',()=>t.select());
 }
 
 render();

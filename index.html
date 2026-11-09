@@ -245,9 +245,7 @@ textarea{width:100%;min-height:70px;resize:vertical}
 // ---------- constants ----------
 const TABS=[
   {k:'home',l:'홈',i:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'},
-  {k:'gantt',l:'셋업 간트',i:'<path d="M4 5h9M7 10h11M5 15h7M10 20h9"/>'},
   {k:'people',l:'인원 스케쥴',i:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'},
-  {k:'progress',l:'설비 진행율',i:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'},
   {k:'purchase',l:'구매발주현황',i:'<path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>'},
   {k:'trouble',l:'트러블 리스트',i:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>'},
   {k:'admin',l:'기준정보',i:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>'}
@@ -429,28 +427,29 @@ function needBase(){
 // ---------- HOME ----------
 function vHome(){
   const t=today(),ts=fd(t);
-  const act=S.equips.filter(e=>e.status==='진행');
-  const avg=act.length?Math.round(act.reduce((a,e)=>a+eqProg(e),0)/act.length):0;
   const onsite=S.schedules.filter(s=>s.start<=ts&&(s.end||s.start)>=ts&&FIELD_TYPES.includes(s.type));
   const jOnsite=peopleRows().flatMap(r=>r.trips.map(x=>Object.assign({},x,{person:r.name}))).filter(x=>x.start&&x.start<=ts&&(x.end||x.start)>=ts);
   const openT=trRows().filter(r=>r.open);
   const hiT=openT.filter(r=>r.priCls==='bad').length;
-  const lateItems=[];
-  for(const e of S.equips)for(const i of (e.items||[]))if(itemLate(i))lateItems.push({e,i});
   const wkEnd=fd(addD(t,7));
+  const pbOng=buyRows().filter(r=>isOngoing(r)&&buyCust(r)).map(r=>({r,e:buyErp(r)}));
+  const pbDone=pbOng.filter(x=>x.e.state==='done').length;
+  const pbLate=pbOng.filter(x=>x.e.state==='late').sort((a,b)=>String(a.e.eta).localeCompare(String(b.e.eta)));
+  const pbSoon=pbOng.filter(x=>x.e.state==='open'&&x.e.dleft!=null&&x.e.dleft<=7).sort((a,b)=>a.e.dleft-b.e.dleft);
   const upcoming=S.schedules.filter(s=>s.start>ts&&s.start<=wkEnd).sort((a,b)=>a.start.localeCompare(b.start));
   let h=header('홈',`${t.getFullYear()}년 ${t.getMonth()+1}월 ${t.getDate()}일 (${DOW[t.getDay()]})`);
   h+=`<div class="kpis">
-    <div class="kpi"><div class="l">셋업 진행 설비</div><div class="v">${act.length}</div><div class="h">평균 진행율 ${avg}%</div></div>
+    <div class="kpi click" data-tab="purchase" style="cursor:pointer"><div class="l">구매 진행 중</div><div class="v">${pbOng.length}</div><div class="h">등록 고객사 Onging · 입고 완료 ${pbDone}</div></div>
     <div class="kpi"><div class="l">오늘 현장 인원</div><div class="v">${new Set(onsite.map(s=>memberName(s.member)).concat(jOnsite.map(x=>x.person))).size}</div><div class="h">셋업·현장지원·A/S·Jira 출장 기준</div></div>
     <div class="kpi"><div class="l">미결 트러블</div><div class="v" style="color:${openT.length?'var(--bad)':'inherit'}">${openT.length}</div><div class="h">우선순위 높음 ${hiT}건 · 보드+Jira</div></div>
-    <div class="kpi"><div class="l">지연 항목</div><div class="v" style="color:${lateItems.length?'var(--warn)':'inherit'}">${lateItems.length}</div><div class="h">계획일 지난 미완료 셋업 항목</div></div>
+    <div class="kpi click" data-tab="purchase" style="cursor:pointer"><div class="l">입고 지연 · 7일 내 입고</div><div class="v"><span style="color:${pbLate.length?'var(--bad)':'inherit'}">${pbLate.length}</span> <span style="font-size:.6em;color:var(--muted)">/</span> <span style="color:${pbSoon.length?'var(--warn)':'inherit'}">${pbSoon.length}</span></div><div class="h">ERP 입고예정일(최종) 기준</div></div>
   </div>`;
   h+=`<div class="grid2">`;
   h+=`<div class="panel"><h2>오늘 현장 인원<span class="sp"></span><button class="btn sm" data-tab="people">스케쥴</button></h2><div class="body"><div class="list">${onsite.length||jOnsite.length?onsite.map(s=>`<div class="li"><span class="pill acc">${esc(s.type)}</span><span class="t"><b>${esc(memberName(s.member))}</b> · ${esc(siteName(s.site))}</span><span class="m mono">~${short(s.end||s.start)}</span></div>`).join('')+jOnsite.map(x=>`<div class="li" data-act="btEdit" data-id="${esc(x.key)}" style="cursor:pointer"><span class="pill" style="background:var(--c4);color:#fff">출장</span><span class="t"><b>${esc(x.person)}</b> · ${esc(x.site||x.summary)}</span><span class="m mono">~${short(x.end||x.start)}</span></div>`).join(''):'<div class="muted">오늘 현장 일정이 없습니다.</div>'}</div></div></div>`;
   h+=`<div class="panel"><h2>미결 트러블<span class="sp"></span><button class="btn sm" data-tab="trouble">전체</button></h2><div class="body"><div class="list">${openT.length?openT.sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,8).map(r=>`<div class="li click" data-act="${r.src==='board'?'editTr':'tjOpen'}" data-id="${esc(r.id)}" style="cursor:pointer"><span class="pill ${r.priCls}">${esc(r.pri)}</span><span class="t">${r.src==='jira'?`<span class="mono muted" style="font-size:11px">${esc(r.key)}</span> `:''}${esc(r.title)}</span><span class="m">${esc(r.owner)} · ${r.age}일째</span></div>`).join(''):'<div class="muted">미결 트러블이 없습니다.</div>'}</div></div></div>`;
-  h+=`<div class="panel"><h2>셋업 진행 설비<span class="sp"></span><button class="btn sm" data-tab="progress">진행율</button></h2><div class="body"><div class="list">${act.length?act.map(e=>{const p=eqProg(e);return `<div class="li"><span class="t"><b>${esc(equipName(e.id))}</b> <span class="muted">· ${esc(siteName(e.site))}</span></span><div class="bar" style="width:90px"><i style="width:${p}%"></i></div><span class="m mono" style="width:36px;text-align:right">${p}%</span></div>`}).join(''):'<div class="muted">진행 중인 셋업이 없습니다.</div>'}</div></div></div>`;
-  h+=`<div class="panel"><h2>다가오는 7일 일정</h2><div class="body"><div class="list">${upcoming.length?upcoming.slice(0,8).map(s=>`<div class="li"><span class="m mono" style="width:44px">${short(s.start)}</span><span class="pill">${esc(s.type)}</span><span class="t">${esc(memberName(s.member))} · ${esc(siteName(s.site))}</span></div>`).join(''):'<div class="muted">예정된 일정이 없습니다.</div>'}${lateItems.length?`<div class="li"><span class="pill warn">지연</span><span class="t">${lateItems.slice(0,3).map(x=>esc(equipName(x.e.id)+' '+x.i.name)).join(', ')}${lateItems.length>3?' 외 '+(lateItems.length-3)+'건':''}</span></div>`:''}</div></div></div>`;
+  {const show=pbLate.concat(pbSoon).slice(0,8);
+   h+=`<div class="panel"><h2>구매발주현황 <span class="muted" style="font-weight:400;font-size:12px">입고 지연·7일 내 입고예정</span><span class="sp"></span><button class="btn sm" data-tab="purchase">전체</button></h2><div class="body"><div class="list">${show.length?show.map(({r,e})=>{const c=buyCust(r);return `<div class="li click" data-act="buyEdit" data-id="${esc(r.id)}" style="cursor:pointer"><span class="pill ${e.state==='late'?'bad':'warn'}">${e.state==='late'?'지연 '+(-e.dleft)+'일':e.dleft===0?'오늘':'D-'+e.dleft}</span><span class="t"><b>${esc(c?c.name:r.cust||'')}</b> · ${esc(String(r.item||'').slice(0,40))} <span class="muted">· 미입고 ${e.open}/${e.n}</span></span><span class="m mono">${sd(e.eta)}</span></div>`}).join(''):`<div class="muted">${PM.uploadedAt?'입고 지연이나 7일 내 입고예정 건이 없습니다.':'사내 ERP 확인 전입니다. 구매발주현황 → 사내 ERP 확인 방법을 참고하세요.'}</div>`}</div></div></div>`;}
+  h+=`<div class="panel"><h2>다가오는 7일 일정</h2><div class="body"><div class="list">${upcoming.length?upcoming.slice(0,8).map(s=>`<div class="li"><span class="m mono" style="width:44px">${short(s.start)}</span><span class="pill">${esc(s.type)}</span><span class="t">${esc(memberName(s.member))} · ${esc(siteName(s.site))}</span></div>`).join(''):'<div class="muted">예정된 일정이 없습니다.</div>'}</div></div></div>`;
   h+=`</div>`;
   h+=vJira();
   return h;
@@ -784,7 +783,7 @@ function jiraEnsure(force){
   J.key=q;clearInterval(J.timer);
   if(J.state!=='ok')J.state='loading';render();
   jiraFetch();
-  J.timer=setInterval(()=>{if(!document.hidden)jiraFetch()},300000);
+  J.timer=setInterval(()=>{if(!document.hidden&&!J.busy&&(!J.at||Date.now()-J.at>=6*3600e3))jiraFetch()},600000);
 }
 async function jiraFetch(){
   if(!J.key)return;J.busy=true;render();
@@ -816,14 +815,14 @@ function vJira(){
   else if(J.state==='error')body=jiraErrHtml(J.err);
   else{
     const ms=S.members.filter(jiraAcc),sel=J.who;
-    const list=J.issues.filter(i=>!sel||i.assigneeId===sel||i.reporterId===sel);
+    const listAll=J.issues.filter(i=>!sel||i.assigneeId===sel||i.reporterId===sel).sort((a,b)=>String(b.updated||'').localeCompare(String(a.updated||'')));const list=listAll.slice(0,10);
     const base=(J.site||'').replace(/\/+$/,'');
-    stamp=`<span class="jstamp">${J.at?hhmm(J.at)+' 갱신':''} · 5분마다 자동</span>`;
+    stamp=`<span class="jstamp">${J.at?hhmm(J.at)+' 갱신':''} · 6시간마다 자동 · 새로 고침(F5) 시 갱신</span>`;
     body=`<div class="chips"><button class="chip ${!sel?'on':''}" data-act="jWho" data-v="">전체 ${J.issues.length}</button>${ms.map(m=>{const a=jiraAcc(m),n=J.issues.filter(i=>i.assigneeId===a||i.reporterId===a).length;return `<button class="chip ${sel===a?'on':''}" data-act="jWho" data-v="${esc(a)}">${esc(m.name)} ${n}</button>`}).join('')}</div>`;
     body+=list.length?`<div class="body" style="padding-block:4px">${list.map(i=>{
       const st=i.cat==='done'?'ok':i.cat==='indeterminate'?'acc':'';const rp=memberByAcc(i.reporterId),as=memberByAcc(i.assigneeId);
       return `<div class="jr">${base?`<a class="k" href="${esc(base)}/browse/${encodeURIComponent(i.key)}" target="_blank" rel="noopener">${esc(i.key)}</a>`:`<span class="k">${esc(i.key)}</span>`}<span class="s" title="${esc(i.summary)}">${esc(i.summary)}</span><span class="pill ${st}">${esc(i.status)}</span>
-      <div class="w"><span>${esc(i.type)}${i.pri?' · '+esc(i.pri):''}</span><span>작성 ${esc(rp?rp.name:i.reporter||'–')}</span><span>담당 ${esc(as?as.name:i.assignee||'미지정')}</span><span>${esc(ago(i.updated))} 수정</span></div></div>`}).join('')}</div>`
+      <div class="w"><span>${esc(i.type)}${i.pri?' · '+esc(i.pri):''}</span><span>작성 ${esc(rp?rp.name:i.reporter||'–')}</span><span>담당 ${esc(as?as.name:i.assignee||'미지정')}</span><span>${esc(ago(i.updated))} 수정</span></div></div>`}).join('')}${listAll.length>10?`<div class="muted" style="font-size:12px;padding:6px 0">최근 수정된 10건만 표시 (전체 ${listAll.length}건)</div>`:''}</div>`
       :`<div class="jmsg">최근 ${Number(JC.days)||14}일 동안 해당 인원의 Jira 활동이 없습니다.</div>`;
     if(J.err)body=`<div class="banner" style="margin:10px 14px 0">최근 갱신에 실패해 이전 결과를 보여 주고 있습니다.</div>`+body;
   }
